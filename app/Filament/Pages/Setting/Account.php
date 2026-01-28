@@ -231,6 +231,28 @@ class Account extends SettingsPage
                             ->label(__('Extra Parameters'))
                             ->visible(fn ($get) => $get('auth_laravelpassport_enabled')),
                     ]),
+
+                Forms\Components\Section::make(__('MTCaptcha'))
+                    ->schema([
+                        Forms\Components\Toggle::make('mtcaptcha_enabled')
+                            ->label(__('Enabled'))
+                            ->live()
+                            ->helperText(__('Enable MTCaptcha on login, registration, and public ticket submission pages. Validation is skipped on localhost for testing.'))
+                            ->required(),
+
+                        Forms\Components\TextInput::make('mtcaptcha_site_key')
+                            ->label(__('Site Key'))
+                            ->helperText(__('MTCaptcha site key'))
+                            ->visible(fn ($get) => $get('mtcaptcha_enabled'))
+                            ->required(fn ($get) => $get('mtcaptcha_enabled')),
+
+                        Forms\Components\TextInput::make('mtcaptcha_private_key')
+                            ->label(__('Private Key'))
+                            ->helperText(__('MTCaptcha private key'))
+                            ->password()
+                            ->visible(fn ($get) => $get('mtcaptcha_enabled'))
+                            ->required(fn ($get) => $get('mtcaptcha_enabled')),
+                    ]),
             ]);
     }
 }

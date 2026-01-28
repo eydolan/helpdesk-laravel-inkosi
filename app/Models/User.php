@@ -141,4 +141,46 @@ class User extends Authenticatable implements FilamentUser, HasLocalePreference,
     {
         return $this->hasMany(SocialiteUser::class);
     }
+
+    /**
+     * Scope a query to find user by email or phone
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param string $identifier Email or phone number
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeByIdentifier($query, string $identifier)
+    {
+        // Check if identifier looks like an email
+        if (filter_var($identifier, FILTER_VALIDATE_EMAIL)) {
+            return $query->where('email', $identifier);
+        }
+
+        // Otherwise treat as phone number
+        return $query->where('phone', $identifier);
+    }
+
+    /**
+     * Scope a query to find user by email
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param string $email
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeByEmail($query, string $email)
+    {
+        return $query->where('email', $email);
+    }
+
+    /**
+     * Scope a query to find user by phone
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param string $phone
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeByPhone($query, string $phone)
+    {
+        return $query->where('phone', $phone);
+    }
 }

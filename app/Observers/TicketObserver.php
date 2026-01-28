@@ -80,6 +80,10 @@ class TicketObserver
      */
     public function deleted(Ticket $ticket): void
     {
+        if (!$ticket->owner) {
+            return; // Guest ticket, no owner to notify
+        }
+        
         $authUser = auth()->user();
         if ($ticket->owner->id != $authUser->id) {
             $ticket->owner->notify(new TicketDeleted($ticket));
@@ -91,6 +95,10 @@ class TicketObserver
      */
     public function restored(Ticket $ticket): void
     {
+        if (!$ticket->owner) {
+            return; // Guest ticket, no owner to notify
+        }
+        
         $authUser = auth()->user();
         if ($ticket->owner->id != $authUser->id) {
             $ticket->owner->notify(new TicketRestored($ticket));

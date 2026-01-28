@@ -99,6 +99,13 @@ class TicketResource extends Resource
                         ->searchable()
                         ->required(),
 
+                    Forms\Components\TextInput::make('voucher_number')
+                        ->label(__('Voucher Number'))
+                        ->maxLength(255)
+                        ->columnSpan([
+                            'sm' => 2,
+                        ]),
+
                     Forms\Components\TextInput::make('title')
                         ->label(__('Title'))
                         ->required()
@@ -165,9 +172,33 @@ class TicketResource extends Resource
 
                     Forms\Components\Placeholder::make('owner_id')
                         ->label(__('Owner'))
-                        ->content(fn (
-                            ?Ticket $record,
-                        ): string => $record ? $record->owner->name : '-'),
+                        ->content(function (?Ticket $record): string {
+                            if (!$record) {
+                                return '-';
+                            }
+                            if ($record->owner) {
+                                return $record->owner->name;
+                            }
+                            // Show guest info if owner is null
+                            return $record->guest_name ?? 'Guest';
+                        }),
+                    
+                    Forms\Components\Placeholder::make('guest_info')
+                        ->label(__('Guest Contact'))
+                        ->content(function (?Ticket $record): string {
+                            if (!$record || $record->owner) {
+                                return '-';
+                            }
+                            $info = [];
+                            if ($record->guest_email) {
+                                $info[] = $record->guest_email;
+                            }
+                            if ($record->guest_phone) {
+                                $info[] = $record->guest_phone;
+                            }
+                            return $info ? implode(' / ', $info) : '-';
+                        })
+                        ->visible(fn (?Ticket $record) => $record && !$record->owner),
 
                     Forms\Components\Placeholder::make('created_at')
                         ->translateLabel()
@@ -210,7 +241,13 @@ class TicketResource extends Resource
                 Tables\Columns\TextColumn::make('owner.name')
                     ->searchable()
                     ->label(__('Owner'))
-                    ->toggleable(),
+                    ->toggleable()
+                    ->formatStateUsing(function (Ticket $record) {
+                        if ($record->owner) {
+                            return $record->owner->name;
+                        }
+                        return $record->guest_name ?? 'Guest';
+                    }),
                 Tables\Columns\TextColumn::make('category.name')
                     ->searchable()
                     ->label(__('Category'))

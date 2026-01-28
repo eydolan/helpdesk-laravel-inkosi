@@ -2,6 +2,8 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Pages\Auth\Login;
+use App\Filament\Pages\Auth\Register;
 use App\Filament\Resources\TicketResource;
 use App\Settings\AccountSettings;
 use App\Settings\GeneralSettings;
@@ -25,6 +27,7 @@ use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\HtmlString;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Joaopaulolndev\FilamentEditProfile\FilamentEditProfilePlugin;
 use Joaopaulolndev\FilamentEditProfile\Pages\EditProfilePage;
@@ -43,7 +46,7 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('admin')
-            ->login()
+            ->login(Login::class)
             ->colors([
                 'primary' => Color::Amber,
             ])
@@ -126,9 +129,10 @@ class AdminPanelProvider extends PanelProvider
                 Authenticate::class,
             ]);
 
-        if ($generalSettings->site_logo_image) {
-            $panel->brandLogo(Storage::disk('public')->url($generalSettings->site_logo_image));
-        }
+        // Set InkosiConnect branding
+        $panel->brandName('inkosiConnect Helpdesk');
+        $panel->brandLogo(new HtmlString('<img src="https://inkosiconnect.co.za/assets/content/images/logo/loader-image.jpg" alt="inkosiConnect Helpdesk" />'));
+        $panel->darkModeBrandLogo(new HtmlString('<img src="https://inkosiconnect.co.za/assets/content/images/logo/w-0001ink-logo-2025-2.svg" alt="inkosiConnect Helpdesk" />'));
 
         if ($generalSettings->site_logo_height) {
             $panel->brandLogoHeight($generalSettings->site_logo_height);
@@ -139,7 +143,7 @@ class AdminPanelProvider extends PanelProvider
         }
 
         if ($accountSettings->user_registration) {
-            $panel->registration();
+            $panel->registration(Register::class);
         }
 
         if ($accountSettings->user_email_verification) {

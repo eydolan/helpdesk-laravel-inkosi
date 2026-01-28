@@ -12,7 +12,7 @@ class UnitPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->can('view-any Unit');
+        return $user->hasRole('Super Admin') || $user->can('view-any Unit');
     }
 
     /**
@@ -20,7 +20,7 @@ class UnitPolicy
      */
     public function view(User $user, Unit $unit): bool
     {
-        return $user->can('view Unit');
+        return $user->hasRole('Super Admin') || $user->can('view Unit');
     }
 
     /**
@@ -28,7 +28,7 @@ class UnitPolicy
      */
     public function create(User $user): bool
     {
-        return $user->can('create Unit');
+        return $user->hasRole('Super Admin') || $user->can('create Unit');
     }
 
     /**
@@ -36,7 +36,7 @@ class UnitPolicy
      */
     public function update(User $user, Unit $unit): bool
     {
-        return $user->can('update Unit');
+        return $user->hasRole('Super Admin') || $user->can('update Unit');
     }
 
     /**
@@ -44,7 +44,7 @@ class UnitPolicy
      */
     public function delete(User $user, Unit $unit): bool
     {
-        return $user->can('delete Unit');
+        return $user->hasRole('Super Admin') || $user->can('delete Unit');
     }
 
     /**
@@ -52,7 +52,7 @@ class UnitPolicy
      */
     public function restore(User $user, Unit $unit): bool
     {
-        return $user->can('restore Unit');
+        return $user->hasRole('Super Admin') || $user->can('restore Unit');
     }
 
     /**
@@ -60,6 +60,6 @@ class UnitPolicy
      */
     public function forceDelete(User $user, Unit $unit): bool
     {
-        return $user->can('force-delete Unit');
+        return $user->hasRole('Super Admin') || $user->can('force-delete Unit');
     }
 }

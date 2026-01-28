@@ -29,6 +29,14 @@ class AuthServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Register custom user provider for email/phone authentication
+        \Auth::provider('custom', function ($app, array $config) {
+            return new \App\Auth\CustomUserProvider(
+                $app['hash'],
+                $config['model']
+            );
+        });
+
         Gate::before(function (User $user, string $ability) {
             return $user->isSuperAdmin() ? true : null;
         });

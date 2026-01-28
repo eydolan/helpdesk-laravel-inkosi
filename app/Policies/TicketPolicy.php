@@ -21,6 +21,12 @@ class TicketPolicy
      */
     public function view(User $user, Ticket $ticket): bool
     {
+        // Handle guest tickets (no owner)
+        if (!$ticket->owner_id) {
+            // Only admins can view guest tickets
+            return $user->hasAnyRole(['Super Admin', 'Global Viewer', 'Admin Unit']);
+        }
+
         // Display all tickets to Super Admin and Global Viewer
         if ($user->hasAnyRole(['Super Admin', 'Global Viewer'])) {
             return true;
@@ -42,10 +48,11 @@ class TicketPolicy
 
     /**
      * Determine whether the user can create models.
+     * Allow public ticket creation (no auth required).
      */
-    public function create(User $user): bool
+    public function create(?User $user): bool
     {
-        return true;
+        return true; // Public access allowed
     }
 
     /**

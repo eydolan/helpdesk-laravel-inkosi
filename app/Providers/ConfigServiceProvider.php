@@ -97,11 +97,11 @@ class ConfigServiceProvider extends ServiceProvider
             if ($mailSettings->mailer == 'smtp') {
                 config(['mail.mailers.smtp' => [
                     'transport' => 'smtp',
-                    'scheme' => $mailSettings->smtp_scheme,
+                    'scheme' => $mailSettings->smtp_scheme ?? 'smtp',
                     'host' => $mailSettings->smtp_host,
                     'port' => $mailSettings->smtp_port,
-                    'username' => $mailSettings->smtp_username,
-                    'password' => $mailSettings->smtp_password,
+                    'username' => $mailSettings->smtp_username ?? '',
+                    'password' => $mailSettings->smtp_password ?? '',
                     'local_domain' => $mailSettings->smtp_localdomain,
                 ]]);
             }

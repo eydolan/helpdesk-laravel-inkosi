@@ -28,6 +28,10 @@ class Ticket extends Model
         'ticket_statuses_id',
         'status_updated_at',
         'responsible_id',
+        'voucher_number',
+        'guest_name',
+        'guest_email',
+        'guest_phone',
     ];
 
     /**
@@ -161,5 +165,47 @@ class Ticket extends Model
     public function comments()
     {
         return $this->hasMany(Comment::class, 'tiket_id');
+    }
+
+    /**
+     * Get the display name for the ticket owner (from owner or guest fields)
+     *
+     * @return string
+     */
+    public function getDisplayNameAttribute(): string
+    {
+        if ($this->owner) {
+            return $this->owner->name;
+        }
+
+        return $this->guest_name ?? 'Guest';
+    }
+
+    /**
+     * Get the display email for the ticket owner (from owner or guest fields)
+     *
+     * @return string|null
+     */
+    public function getDisplayEmailAttribute(): ?string
+    {
+        if ($this->owner && $this->owner->email) {
+            return $this->owner->email;
+        }
+
+        return $this->guest_email;
+    }
+
+    /**
+     * Get the display phone for the ticket owner (from owner or guest fields)
+     *
+     * @return string|null
+     */
+    public function getDisplayPhoneAttribute(): ?string
+    {
+        if ($this->owner && $this->owner->phone) {
+            return $this->owner->phone;
+        }
+
+        return $this->guest_phone;
     }
 }

@@ -12,7 +12,7 @@ class CategoryPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->hasRole('Admin Unit');
+        return $user->hasAnyRole(['Super Admin', 'Admin Unit']);
     }
 
     /**
@@ -20,6 +20,9 @@ class CategoryPolicy
      */
     public function view(User $user, Category $category): bool
     {
+        if ($user->hasRole('Super Admin')) {
+            return true;
+        }
         return $user->unit_id == $category->unit_id;
     }
 
@@ -36,6 +39,9 @@ class CategoryPolicy
      */
     public function update(User $user, Category $category): bool
     {
+        if ($user->hasRole('Super Admin')) {
+            return true;
+        }
         return $this->view($user, $category);
     }
 
@@ -44,6 +50,9 @@ class CategoryPolicy
      */
     public function delete(User $user, Category $category): bool
     {
+        if ($user->hasRole('Super Admin')) {
+            return true;
+        }
         return $this->view($user, $category);
     }
 
@@ -52,6 +61,9 @@ class CategoryPolicy
      */
     public function restore(User $user, Category $category): bool
     {
+        if ($user->hasRole('Super Admin')) {
+            return true;
+        }
         return $this->view($user, $category);
     }
 
@@ -60,6 +72,9 @@ class CategoryPolicy
      */
     public function forceDelete(User $user, Category $category): bool
     {
+        if ($user->hasRole('Super Admin')) {
+            return true;
+        }
         return $this->view($user, $category);
     }
 }

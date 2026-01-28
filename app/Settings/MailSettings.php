@@ -6,15 +6,15 @@ class MailSettings extends Settings
 {
     public string $mailer;
 
-    public string $smtp_scheme;
+    public ?string $smtp_scheme = 'smtp';
 
     public string $smtp_host;
 
     public int $smtp_port;
 
-    public string $smtp_username;
+    public ?string $smtp_username = '';
 
-    public string $smtp_password;
+    public ?string $smtp_password = '';
 
     public string $smtp_localdomain;
 

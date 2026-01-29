@@ -77,10 +77,7 @@ class User extends Authenticatable implements FilamentUser, HasLocalePreference,
     public function routeNotificationForMail($notification = null): ?string
     {
         // If email is already an SMS gateway email, return it
-        if ($this->email && (
-            str_ends_with($this->email, '@winsms.net') || 
-            str_ends_with($this->email, '@winsms.co.za')
-        )) {
+        if ($this->email && str_ends_with($this->email, '@winsms.net')) {
             return $this->email;
         }
         

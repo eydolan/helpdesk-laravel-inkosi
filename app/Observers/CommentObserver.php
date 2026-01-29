@@ -20,6 +20,8 @@ class CommentObserver
         
         $ticket = $comment->ticket;
         
+        $notifiedUsers = collect([$authUser->id]); // Track users we've notified to avoid duplicates
+        
         // ALWAYS notify the ticket owner (unless they're the one who commented)
         if ($ticket->owner && $ticket->owner->id !== $authUser->id) {
             try {
@@ -32,6 +34,7 @@ class CommentObserver
                 ]);
                 
                 $ticket->owner->notify(new TicketCommentCreated($comment));
+                $notifiedUsers->push($ticket->owner->id);
             } catch (\Exception $e) {
                 \Log::error('Failed to send comment notification to ticket owner', [
                     'ticket_id' => $ticket->id,
@@ -49,8 +52,7 @@ class CommentObserver
                 // Determine notification address (email or SMS)
                 // Check if guest email is an SMS gateway address
                 $hasGuestEmail = $ticket->guest_email 
-                    && !str_ends_with($ticket->guest_email, '@winsms.net')
-                    && !str_ends_with($ticket->guest_email, '@winsms.co.za');
+                    && !str_ends_with($ticket->guest_email, '@winsms.net');
                 
                 if ($hasGuestEmail) {
                     $guestNotifiable->route('mail', $ticket->guest_email);
@@ -61,10 +63,7 @@ class CommentObserver
                     ]);
                 } elseif ($ticket->guest_phone) {
                     // Send SMS via email-to-SMS gateway
-                    // Use existing SMS gateway email if available, otherwise construct new one
-                    $smsEmail = ($ticket->guest_email && 
-                        (str_ends_with($ticket->guest_email, '@winsms.net') || 
-                         str_ends_with($ticket->guest_email, '@winsms.co.za')))
+                    $smsEmail = ($ticket->guest_email && str_ends_with($ticket->guest_email, '@winsms.net'))
                         ? $ticket->guest_email
                         : ($ticket->guest_phone . '@winsms.net');
                     $guestNotifiable->route('mail', $smsEmail);
@@ -91,18 +90,41 @@ class CommentObserver
             }
         }
         
-        // Also notify other subscribers (responsible, commenters)
+        // ALWAYS notify the responsible user (unless they're the commenter or already notified)
+        if ($ticket->responsible && 
+            $ticket->responsible->id !== $authUser->id && 
+            !$notifiedUsers->contains($ticket->responsible->id)) {
+            try {
+                \Log::info('Sending comment notification to responsible user', [
+                    'ticket_id' => $ticket->id,
+                    'responsible_id' => $ticket->responsible->id,
+                    'responsible_email' => $ticket->responsible->email,
+                    'responsible_phone' => $ticket->responsible->phone,
+                    'comment_id' => $comment->id,
+                ]);
+                
+                $ticket->responsible->notify(new TicketCommentCreated($comment));
+                $notifiedUsers->push($ticket->responsible->id);
+            } catch (\Exception $e) {
+                \Log::error('Failed to send comment notification to responsible user', [
+                    'ticket_id' => $ticket->id,
+                    'responsible_id' => $ticket->responsible->id,
+                    'comment_id' => $comment->id,
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString(),
+                ]);
+            }
+        }
+        
+        // Also notify other subscribers (commenters) - but exclude already notified users
         $subscribers = $ticket->getSubscribers();
 
-        // Remove the comment author and owner from subscribers (already handled above)
-        if ($subscribers->has($authUser->id)) {
-            $subscribers->pull($authUser->id);
-        }
-        if ($ticket->owner && $subscribers->has($ticket->owner->id)) {
-            $subscribers->pull($ticket->owner->id);
-        }
+        // Remove users we've already notified
+        $subscribers = $subscribers->reject(function ($subscriber) use ($notifiedUsers) {
+            return $notifiedUsers->contains($subscriber->id);
+        });
 
-        // Send notifications to other subscribers
+        // Send notifications to remaining subscribers
         $subscribers->each(function ($subscriber) use ($comment) {
             try {
                 \Log::info('Sending comment notification to subscriber', [

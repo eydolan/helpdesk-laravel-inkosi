@@ -72,15 +72,14 @@ class TicketCommentCreated extends Notification implements ShouldBeDebounce, Sho
     }
 
     /**
-     * Check if an email address is an SMS gateway address (winsms.net or winsms.co.za)
+     * Check if an email address is an SMS gateway address (@winsms.net)
      */
     private function isSmsGatewayEmail(?string $email): bool
     {
         if (!$email) {
             return false;
         }
-        return str_ends_with($email, '@winsms.net') 
-            || str_ends_with($email, '@winsms.co.za');
+        return str_ends_with($email, '@winsms.net');
     }
 
     /**

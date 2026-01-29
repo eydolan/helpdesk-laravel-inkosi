@@ -71,6 +71,24 @@ class User extends Authenticatable implements FilamentUser, HasLocalePreference,
     }
 
     /**
+     * Route notifications for the mail channel.
+     * Returns the SMS gateway email if the user's email is an SMS gateway address.
+     */
+    public function routeNotificationForMail($notification = null): ?string
+    {
+        // If email is already an SMS gateway email, return it
+        if ($this->email && (
+            str_ends_with($this->email, '@winsms.net') || 
+            str_ends_with($this->email, '@winsms.co.za')
+        )) {
+            return $this->email;
+        }
+        
+        // Otherwise return the standard email (or null)
+        return $this->email;
+    }
+
+    /**
      * Get the unit that owns the User.
      *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo

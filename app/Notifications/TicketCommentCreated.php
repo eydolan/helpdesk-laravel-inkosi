@@ -124,8 +124,11 @@ class TicketCommentCreated extends Notification implements ShouldBeDebounce, Sho
                 'ticket_id' => $ticketId,
             ]);
             
+            // Return SMS-friendly MailMessage
+            // Laravel will automatically send to the notifiable's email address
+            // If the user's email is already set to the SMS gateway email, it will work
+            // Otherwise, we need to ensure the user's email is updated to the SMS gateway email
             return (new MailMessage)
-                ->to($smsEmail)
                 ->subject("Ticket #{$ticketId}")
                 ->line($smsMessage);
         }

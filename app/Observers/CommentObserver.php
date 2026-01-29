@@ -17,13 +17,61 @@ class CommentObserver
         // Eager load ticket with necessary relationships to avoid N+1 queries
         $comment->loadMissing(['ticket.owner', 'ticket.responsible', 'ticket.comments.user']);
         
-        $subscribers = $comment->ticket->getSubscribers();
+        $ticket = $comment->ticket;
+        
+        // ALWAYS notify the ticket owner (unless they're the one who commented)
+        $notifyOwner = $ticket->owner && $ticket->owner->id !== $authUser->id;
+        
+        if ($notifyOwner) {
+            try {
+                \Log::info('Sending comment notification to ticket owner', [
+                    'ticket_id' => $ticket->id,
+                    'owner_id' => $ticket->owner->id,
+                    'owner_email' => $ticket->owner->email,
+                    'owner_phone' => $ticket->owner->phone,
+                    'comment_id' => $comment->id,
+                ]);
+                
+                $ticket->owner->notify(new TicketCommentCreated($comment));
+            } catch (\Exception $e) {
+                \Log::error('Failed to send comment notification to ticket owner', [
+                    'ticket_id' => $ticket->id,
+                    'owner_id' => $ticket->owner->id,
+                    'comment_id' => $comment->id,
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString(),
+                ]);
+            }
+        }
+        
+        // Also notify other subscribers (responsible, commenters)
+        $subscribers = $ticket->getSubscribers();
 
+        // Remove the comment author and owner from subscribers (already handled above)
         if ($subscribers->has($authUser->id)) {
             $subscribers->pull($authUser->id);
         }
+        if ($ticket->owner && $subscribers->has($ticket->owner->id)) {
+            $subscribers->pull($ticket->owner->id);
+        }
 
-        $subscribers->each(fn ($subscriber) => $subscriber->notify(new TicketCommentCreated($comment)));
+        // Send notifications to other subscribers
+        $subscribers->each(function ($subscriber) use ($comment) {
+            try {
+                \Log::info('Sending comment notification to subscriber', [
+                    'subscriber_id' => $subscriber->id,
+                    'comment_id' => $comment->id,
+                ]);
+                
+                $subscriber->notify(new TicketCommentCreated($comment));
+            } catch (\Exception $e) {
+                \Log::error('Failed to send comment notification to subscriber', [
+                    'subscriber_id' => $subscriber->id,
+                    'comment_id' => $comment->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        });
     }
 
     /**

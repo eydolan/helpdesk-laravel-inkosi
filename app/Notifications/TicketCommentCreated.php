@@ -106,6 +106,13 @@ class TicketCommentCreated extends Notification implements ShouldBeDebounce, Sho
             // Create concise SMS message
             $smsMessage = "Ticket #{$ticketId} reply: {$commentText}";
             
+            \Log::info('Sending ticket comment via SMS (email-to-SMS)', [
+                'user_id' => $notifiable->id,
+                'phone' => $notifiable->phone,
+                'sms_email' => $smsEmail,
+                'ticket_id' => $ticketId,
+            ]);
+            
             return (new MailMessage)
                 ->to($smsEmail)
                 ->subject("Ticket #{$ticketId}")
@@ -113,6 +120,12 @@ class TicketCommentCreated extends Notification implements ShouldBeDebounce, Sho
         }
         
         // Regular email for users with email addresses
+        \Log::info('Sending ticket comment via email', [
+            'user_id' => $notifiable->id,
+            'email' => $notifiable->email,
+            'ticket_id' => $this->comment->ticket->id,
+        ]);
+        
         return (new MailMessage)
             ->subject($subjectPrefix.__('New comment on ticket #:ticket', [
                 'ticket' => $this->comment->ticket->id,

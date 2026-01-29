@@ -4,6 +4,7 @@ namespace App\Observers;
 
 use App\Models\Comment;
 use App\Notifications\TicketCommentCreated;
+use Illuminate\Notifications\AnonymousNotifiable;
 
 class CommentObserver
 {
@@ -20,9 +21,7 @@ class CommentObserver
         $ticket = $comment->ticket;
         
         // ALWAYS notify the ticket owner (unless they're the one who commented)
-        $notifyOwner = $ticket->owner && $ticket->owner->id !== $authUser->id;
-        
-        if ($notifyOwner) {
+        if ($ticket->owner && $ticket->owner->id !== $authUser->id) {
             try {
                 \Log::info('Sending comment notification to ticket owner', [
                     'ticket_id' => $ticket->id,
@@ -37,6 +36,47 @@ class CommentObserver
                 \Log::error('Failed to send comment notification to ticket owner', [
                     'ticket_id' => $ticket->id,
                     'owner_id' => $ticket->owner->id,
+                    'comment_id' => $comment->id,
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString(),
+                ]);
+            }
+        } elseif (!$ticket->owner && ($ticket->guest_email || $ticket->guest_phone)) {
+            // Handle guest tickets - send notification to guest email/phone
+            try {
+                $guestNotifiable = new AnonymousNotifiable();
+                
+                // Determine notification address (email or SMS)
+                $hasGuestEmail = $ticket->guest_email 
+                    && !str_ends_with($ticket->guest_email, '@winsms.net');
+                
+                if ($hasGuestEmail) {
+                    $guestNotifiable->route('mail', $ticket->guest_email);
+                    \Log::info('Sending comment notification to guest email', [
+                        'ticket_id' => $ticket->id,
+                        'guest_email' => $ticket->guest_email,
+                        'comment_id' => $comment->id,
+                    ]);
+                } elseif ($ticket->guest_phone) {
+                    // Send SMS via email-to-SMS gateway
+                    $smsEmail = $ticket->guest_phone . '@winsms.net';
+                    $guestNotifiable->route('mail', $smsEmail);
+                    \Log::info('Sending comment notification to guest phone via SMS', [
+                        'ticket_id' => $ticket->id,
+                        'guest_phone' => $ticket->guest_phone,
+                        'sms_email' => $smsEmail,
+                        'comment_id' => $comment->id,
+                    ]);
+                }
+                
+                if ($hasGuestEmail || $ticket->guest_phone) {
+                    $guestNotifiable->notify(new TicketCommentCreated($comment));
+                }
+            } catch (\Exception $e) {
+                \Log::error('Failed to send comment notification to guest', [
+                    'ticket_id' => $ticket->id,
+                    'guest_email' => $ticket->guest_email,
+                    'guest_phone' => $ticket->guest_phone,
                     'comment_id' => $comment->id,
                     'error' => $e->getMessage(),
                     'trace' => $e->getTraceAsString(),

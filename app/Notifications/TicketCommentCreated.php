@@ -37,12 +37,9 @@ class TicketCommentCreated extends Notification implements ShouldBeDebounce, Sho
      */
     public function viaDebounce(object $notifiable): array
     {
-        // Check if user has a real email address (not @winsms.net)
-        $hasEmail = $notifiable->email 
-            && !str_ends_with($notifiable->email, '@winsms.net');
-        
+        // Always use mail channel, but we'll route to SMS if needed in toMail()
         return [
-            'mail' => true, // Always use mail channel, but we'll route to SMS if needed
+            'mail' => true,
             'database' => false,
         ];
     }
@@ -75,6 +72,18 @@ class TicketCommentCreated extends Notification implements ShouldBeDebounce, Sho
     }
 
     /**
+     * Check if an email address is an SMS gateway address (winsms.net or winsms.co.za)
+     */
+    private function isSmsGatewayEmail(?string $email): bool
+    {
+        if (!$email) {
+            return false;
+        }
+        return str_ends_with($email, '@winsms.net') 
+            || str_ends_with($email, '@winsms.co.za');
+    }
+
+    /**
      * Get the mail representation of the notification.
      */
     public function toMail(object $notifiable): MailMessage
@@ -82,14 +91,16 @@ class TicketCommentCreated extends Notification implements ShouldBeDebounce, Sho
         $siteTitle = app(GeneralSettings::class)->site_title;
         $subjectPrefix = "[{$siteTitle}] ";
         
-        // Check if user has a real email address (not null and not @winsms.net)
+        // Check if user has a real email address (not an SMS gateway address)
         $hasEmail = $notifiable->email 
-            && !str_ends_with($notifiable->email, '@winsms.net');
+            && !$this->isSmsGatewayEmail($notifiable->email);
         
-        // If no email or @winsms.net email, send SMS via email-to-SMS gateway
+        // If no email or SMS gateway email, send SMS via email-to-SMS gateway
         if (!$hasEmail && $notifiable->phone) {
-            // Send SMS via email-to-SMS gateway
-            $smsEmail = $notifiable->phone . '@winsms.net';
+            // Use existing SMS gateway email if available, otherwise construct new one
+            $smsEmail = $this->isSmsGatewayEmail($notifiable->email) 
+                ? $notifiable->email 
+                : ($notifiable->phone . '@winsms.net');
             
             // Create SMS-friendly message (shorter, no HTML, plain text)
             $ticketId = $this->comment->ticket->id;

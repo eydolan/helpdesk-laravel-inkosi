@@ -47,8 +47,10 @@ class CommentObserver
                 $guestNotifiable = new AnonymousNotifiable();
                 
                 // Determine notification address (email or SMS)
+                // Check if guest email is an SMS gateway address
                 $hasGuestEmail = $ticket->guest_email 
-                    && !str_ends_with($ticket->guest_email, '@winsms.net');
+                    && !str_ends_with($ticket->guest_email, '@winsms.net')
+                    && !str_ends_with($ticket->guest_email, '@winsms.co.za');
                 
                 if ($hasGuestEmail) {
                     $guestNotifiable->route('mail', $ticket->guest_email);
@@ -59,7 +61,12 @@ class CommentObserver
                     ]);
                 } elseif ($ticket->guest_phone) {
                     // Send SMS via email-to-SMS gateway
-                    $smsEmail = $ticket->guest_phone . '@winsms.net';
+                    // Use existing SMS gateway email if available, otherwise construct new one
+                    $smsEmail = ($ticket->guest_email && 
+                        (str_ends_with($ticket->guest_email, '@winsms.net') || 
+                         str_ends_with($ticket->guest_email, '@winsms.co.za')))
+                        ? $ticket->guest_email
+                        : ($ticket->guest_phone . '@winsms.net');
                     $guestNotifiable->route('mail', $smsEmail);
                     \Log::info('Sending comment notification to guest phone via SMS', [
                         'ticket_id' => $ticket->id,

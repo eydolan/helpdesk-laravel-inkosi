@@ -37,8 +37,12 @@ class TicketCommentCreated extends Notification implements ShouldBeDebounce, Sho
      */
     public function viaDebounce(object $notifiable): array
     {
+        // Check if user has a real email address (not @winsms.net)
+        $hasEmail = $notifiable->email 
+            && !str_ends_with($notifiable->email, '@winsms.net');
+        
         return [
-            'mail' => true,
+            'mail' => true, // Always use mail channel, but we'll route to SMS if needed
             'database' => false,
         ];
     }
@@ -77,7 +81,38 @@ class TicketCommentCreated extends Notification implements ShouldBeDebounce, Sho
     {
         $siteTitle = app(GeneralSettings::class)->site_title;
         $subjectPrefix = "[{$siteTitle}] ";
-
+        
+        // Check if user has a real email address (not null and not @winsms.net)
+        $hasEmail = $notifiable->email 
+            && !str_ends_with($notifiable->email, '@winsms.net');
+        
+        // If no email or @winsms.net email, send SMS via email-to-SMS gateway
+        if (!$hasEmail && $notifiable->phone) {
+            // Send SMS via email-to-SMS gateway
+            $smsEmail = $notifiable->phone . '@winsms.net';
+            
+            // Create SMS-friendly message (shorter, no HTML, plain text)
+            $ticketId = $this->comment->ticket->id;
+            $ticketTitle = $this->comment->ticket->title;
+            $commentText = strip_tags($this->comment->comment);
+            
+            // Truncate comment if too long for SMS (SMS limit is typically 160 chars)
+            // Reserve space for ticket info
+            $maxLength = 120;
+            if (strlen($commentText) > $maxLength) {
+                $commentText = substr($commentText, 0, $maxLength - 3) . '...';
+            }
+            
+            // Create concise SMS message
+            $smsMessage = "Ticket #{$ticketId} reply: {$commentText}";
+            
+            return (new MailMessage)
+                ->to($smsEmail)
+                ->subject("Ticket #{$ticketId}")
+                ->line($smsMessage);
+        }
+        
+        // Regular email for users with email addresses
         return (new MailMessage)
             ->subject($subjectPrefix.__('New comment on ticket #:ticket', [
                 'ticket' => $this->comment->ticket->id,

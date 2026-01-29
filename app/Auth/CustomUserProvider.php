@@ -21,7 +21,7 @@ class CustomUserProvider extends EloquentUserProvider implements UserProvider
 
         // If phone is provided in credentials, use phone lookup
         if (isset($credentials['phone'])) {
-            $user = User::byPhone($credentials['phone'])->first();
+            $user = User::where('phone', $credentials['phone'])->first();
             if ($user) {
                 return $user;
             }
@@ -29,20 +29,15 @@ class CustomUserProvider extends EloquentUserProvider implements UserProvider
 
         // Check if 'email' field contains a phone number (not a valid email)
         if (isset($credentials['email'])) {
-            $email = $credentials['email'];
+            $email = trim($credentials['email']);
             
-            // If it's a valid email, use standard email lookup
+            // If it's a valid email, use case-insensitive email lookup
             if (filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                return User::byEmail($email)->first();
+                return User::whereRaw('LOWER(email) = ?', [strtolower($email)])->first();
             } else {
                 // It's a phone number stored in email field
-                return User::byPhone($email)->first();
+                return User::where('phone', $email)->first();
             }
-        }
-
-        // Fallback to standard email lookup
-        if (isset($credentials['email'])) {
-            return User::byEmail($credentials['email'])->first();
         }
 
         return null;
@@ -59,8 +54,8 @@ class CustomUserProvider extends EloquentUserProvider implements UserProvider
             return false;
         }
 
-        // Check if user is active
-        if (method_exists($user, 'is_active') && !$user->is_active) {
+        // Check if user is active (default to true if null for backward compatibility)
+        if ($user->is_active === false) {
             return false;
         }
 

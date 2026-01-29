@@ -1,0 +1,27 @@
+# Redirect all requests to the public directory
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    
+    # Don't rewrite if already in public directory
+    RewriteCond %{REQUEST_URI} ^/public/
+    RewriteRule ^(.*)$ - [L]
+    
+    # Don't rewrite requests for .well-known (Let's Encrypt, etc.)
+    RewriteCond %{REQUEST_URI} !^/\.well-known
+    
+    # Don't rewrite if file exists in root (for compatibility)
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    
+    # Redirect everything else to public directory
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>
+
+# Prevent directory listing
+Options -Indexes
+
+# Prevent access to sensitive files
+<FilesMatch "^(\.env|\.git|composer\.(json|lock)|package\.(json|lock)|artisan|README\.md|DEPLOYMENT\.md|DEPLOY_CHECKLIST\.txt|XNEELO_PHP_COMMANDS\.md|DEPLOY_NO_NPM\.md)">
+    Order allow,deny
+    Deny from all
+</FilesMatch>

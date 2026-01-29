@@ -13,6 +13,8 @@ use Illuminate\Validation\ValidationException;
 
 class Login extends BaseLogin
 {
+    protected static string $view = 'filament.pages.auth.custom-login';
+
     protected function getForms(): array
     {
         $components = [
@@ -55,7 +57,41 @@ class Login extends BaseLogin
             }
         }
         
-        return parent::authenticate();
+        // Get credentials using our custom method
+        $credentials = $this->getCredentialsFromFormData($data);
+        
+        if (empty($credentials) || !isset($credentials['password'])) {
+            throw ValidationException::withMessages([
+                'data.email' => __('These credentials do not match our records.'),
+            ]);
+        }
+        
+        // Use the custom user provider to retrieve user
+        $guard = auth()->guard();
+        $provider = $guard->getProvider();
+        $user = $provider->retrieveByCredentials($credentials);
+        
+        // Validate credentials
+        if (!$user || !$provider->validateCredentials($user, $credentials)) {
+            throw ValidationException::withMessages([
+                'data.email' => __('These credentials do not match our records.'),
+            ]);
+        }
+        
+        // Check if user is active (default to true if null for backward compatibility)
+        if ($user->is_active === false) {
+            throw ValidationException::withMessages([
+                'data.email' => __('Your account is inactive. Please contact an administrator.'),
+            ]);
+        }
+        
+        // Log the user in
+        $guard->login($user, $data['remember'] ?? false);
+        
+        // Regenerate session
+        session()->regenerate();
+        
+        return app(LoginResponse::class);
     }
 
     /**

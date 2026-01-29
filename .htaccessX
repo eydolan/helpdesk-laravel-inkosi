@@ -1,0 +1,28 @@
+# Redirect all requests to the public directory
+# Don't rewrite if already in public directory
+# Don't rewrite requests for .well-known (Let's Encrypt, etc.)
+# Don't rewrite if file exists in root (for compatibility)
+# Redirect everything else to public directory
+# Prevent directory listing
+# Prevent access to sensitive files
+Order deny,allow
+<IfModule mod_rewrite.c>
+RewriteEngine On
+
+RewriteCond %{REQUEST_URI} ^/public/
+RewriteRule ^(.*)$ - [L]
+
+RewriteCond %{REQUEST_URI} !^/\.well-known
+
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+
+RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>
+<FilesMatch "^(\.env|\.git|composer\.(json|lock)|package\.(json|lock)|artisan|README\.md|DEPLOYMENT\.md|DEPLOY_CHECKLIST\.txt|XNEELO_PHP_COMMANDS\.md|DEPLOY_NO_NPM\.md)">
+</FilesMatch>
+Options -Indexes
+Order deny,allow
+Deny from all
+#Allow from all
+Redirect permanent / https://help.inkosiconnect.co.za/public/

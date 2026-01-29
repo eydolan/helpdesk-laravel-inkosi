@@ -1,0 +1,74 @@
+DEPLOYMENT CHECKLIST FOR help.inkosiconnect.co.za
+==================================================
+
+BEFORE UPLOADING:
+[ ] Commit all changes to Git
+[ ] Push to GitHub
+[ ] Test locally to ensure everything works
+
+FILES TO UPLOAD (via Git or FTP):
+[ ] All application files (app/, config/, database/, resources/, routes/, etc.)
+[ ] public/ directory (web root)
+[ ] composer.json and composer.lock
+[ ] package.json and package-lock.json
+[ ] artisan file
+[ ] .env.example (as reference)
+
+FILES TO EXCLUDE:
+[ ] .env (create new on server)
+[ ] node_modules/ (install via npm)
+[ ] vendor/ (install via composer)
+[ ] .git/ (if using FTP)
+[ ] storage/*.key
+[ ] .phpunit.cache/
+
+ON SERVER - INITIAL SETUP:
+[ ] Upload files to server
+[ ] Install PHP dependencies: composer install --optimize-autoloader --no-dev
+[ ] Install Node dependencies: npm install
+[ ] Build assets: npm run build
+[ ] Copy .env.example to .env
+[ ] Generate app key: php artisan key:generate
+
+ON SERVER - CONFIGURE .ENV:
+[ ] Set APP_ENV=production
+[ ] Set APP_DEBUG=false
+[ ] Set APP_URL=https://help.inkosiconnect.co.za
+[ ] Configure database (same as local)
+[ ] Configure mail settings
+[ ] Set MTCAPTCHA_ENABLED=true
+[ ] Set MTCAPTCHA_SITE_KEY=MTPublic-K1NW2ePLW
+[ ] Set MTCAPTCHA_PRIVATE_KEY=MTPrivat-K1NW2ePLW-le92mM7ykcwYwsTuiJ3HGsHneF6kWLkddKnc06YK9cud4yDkEx
+
+ON SERVER - DATABASE & CACHE:
+[ ] Run migrations: php artisan migrate --force
+[ ] Run settings migrations: php artisan settings:migrate
+[ ] Clear caches: php artisan config:clear && php artisan cache:clear
+[ ] Cache for production: php artisan config:cache && php artisan route:cache
+
+ON SERVER - PERMISSIONS:
+[ ] Set storage permissions: chmod -R 775 storage
+[ ] Set cache permissions: chmod -R 775 bootstrap/cache
+[ ] Create storage link: php artisan storage:link
+
+ON SERVER - WEB SERVER:
+[ ] Configure Apache/Nginx to point to public/ directory
+[ ] Ensure .htaccess is working (Apache)
+[ ] Configure SSL certificate for HTTPS
+[ ] Test site loads: https://help.inkosiconnect.co.za
+
+POST-DEPLOYMENT TESTING:
+[ ] Visit homepage: https://help.inkosiconnect.co.za/
+[ ] Test ticket submission form
+[ ] Verify MTCaptcha widget appears and works
+[ ] Test admin login: https://help.inkosiconnect.co.za/admin/login
+[ ] Check admin settings: https://help.inkosiconnect.co.za/admin/settings/account
+[ ] Verify MTCaptcha settings match .env file
+[ ] Test user registration (if enabled)
+[ ] Check error logs: storage/logs/laravel.log
+
+IMPORTANT NOTES:
+- Database connection stays the same (remote database)
+- MTCaptcha validation will be ACTIVE (not skipped like localhost)
+- Make sure APP_DEBUG=false in production
+- All URLs should use HTTPS

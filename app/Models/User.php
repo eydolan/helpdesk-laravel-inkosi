@@ -117,7 +117,7 @@ class User extends Authenticatable implements FilamentUser, HasLocalePreference,
      */
     public function canAccessPanel(\Filament\Panel $panel): bool
     {
-        return auth()->user()->is_active;
+        return $this->is_active ?? false;
     }
 
     /**
@@ -161,7 +161,7 @@ class User extends Authenticatable implements FilamentUser, HasLocalePreference,
     }
 
     /**
-     * Scope a query to find user by email
+     * Scope a query to find user by email (case-insensitive)
      *
      * @param \Illuminate\Database\Eloquent\Builder $query
      * @param string $email
@@ -169,7 +169,7 @@ class User extends Authenticatable implements FilamentUser, HasLocalePreference,
      */
     public function scopeByEmail($query, string $email)
     {
-        return $query->where('email', $email);
+        return $query->whereRaw('LOWER(email) = ?', [strtolower($email)]);
     }
 
     /**

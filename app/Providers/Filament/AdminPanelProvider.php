@@ -151,7 +151,10 @@ class AdminPanelProvider extends PanelProvider
         }
 
         if ($accountSettings->user_password_reset) {
-            $panel->passwordReset();
+            // Use custom password reset page that supports both email and phone (SMS)
+            $panel->passwordReset(
+                \App\Filament\Pages\Auth\RequestPasswordReset::class
+            );
         }
 
         return $panel;

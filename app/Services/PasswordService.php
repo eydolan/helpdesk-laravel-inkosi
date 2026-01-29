@@ -63,7 +63,8 @@ class PasswordService
     protected function sendPasswordEmail(User $user, string $password): void
     {
         try {
-            Mail::send('emails.password', [
+            // Force SMTP mailer to ensure emails are actually sent
+            Mail::mailer('smtp')->send('emails.password', [
                 'user' => $user,
                 'password' => $password,
             ], function ($message) use ($user) {
@@ -73,8 +74,11 @@ class PasswordService
         } catch (\Exception $e) {
             Log::error('Failed to send password email', [
                 'user_id' => $user->id,
+                'email' => $user->email,
                 'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
             ]);
+            throw $e; // Re-throw to see the error
         }
     }
 
@@ -97,7 +101,14 @@ class PasswordService
      * @param User $user
      * @return string The reset code
      */
-    public function sendPasswordReset(User $user): string
+    /**
+     * Generate and send password reset code
+     *
+     * @param User $user
+     * @param string|null $method 'email', 'sms', or null (auto-detect based on identifier type)
+     * @return string The reset code
+     */
+    public function sendPasswordReset(User $user, ?string $method = null): string
     {
         // Generate 6-digit code
         $code = str_pad((string) rand(0, 999999), 6, '0', STR_PAD_LEFT);
@@ -107,23 +118,79 @@ class PasswordService
         
         $message = "Your password reset code is: {$code}. This code expires in 15 minutes.";
         
-        if ($user->email) {
+        // Determine sending method
+        // If method is 'phone' or 'sms', send via SMS
+        // If method is 'email', send via email
+        // If method is null, prefer email if available, otherwise SMS
+        
+        $useSMS = false;
+        
+        if ($method === 'phone' || $method === 'sms') {
+            $useSMS = true;
+        } elseif ($method === 'email') {
+            $useSMS = false;
+        } elseif ($method === null) {
+            // Auto-detect: prefer email if available, otherwise SMS
+            $useSMS = !$user->email && $user->phone;
+        }
+        
+        if ($useSMS) {
+            // Send via SMS using WinSMS
+            if (!$user->phone) {
+                Log::error('Cannot send SMS: user has no phone number', ['user_id' => $user->id]);
+                throw new \Exception('User does not have a phone number for SMS reset');
+            }
+            
             try {
-                Mail::send('emails.password-reset', [
+                $sent = $this->winSMSService->sendSMS($user->phone, $message);
+                if (!$sent) {
+                    Log::error('Failed to send password reset SMS', [
+                        'user_id' => $user->id,
+                        'phone' => $user->phone,
+                    ]);
+                    throw new \Exception('Failed to send password reset code via SMS. Please check WinSMS configuration.');
+                }
+                Log::info('Password reset code sent via SMS', [
+                    'user_id' => $user->id,
+                    'phone' => $user->phone,
+                ]);
+            } catch (\Exception $e) {
+                Log::error('WinSMS error during password reset', [
+                    'user_id' => $user->id,
+                    'phone' => $user->phone,
+                    'error' => $e->getMessage(),
+                ]);
+                throw $e;
+            }
+        } else {
+            // Send via Email
+            if (!$user->email) {
+                Log::error('Cannot send email: user has no email address', ['user_id' => $user->id]);
+                throw new \Exception('User does not have an email address for email reset');
+            }
+            
+            try {
+                // Force SMTP mailer to ensure emails are actually sent
+                Mail::mailer('smtp')->send('emails.password-reset', [
                     'user' => $user,
                     'code' => $code,
                 ], function ($message) use ($user) {
                     $message->to($user->email, $user->name)
                         ->subject('Password Reset Code');
                 });
+                Log::info('Password reset code sent via email', [
+                    'user_id' => $user->id,
+                    'email' => $user->email,
+                ]);
             } catch (\Exception $e) {
                 Log::error('Failed to send password reset email', [
                     'user_id' => $user->id,
+                    'email' => $user->email,
                     'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString(),
                 ]);
+                throw $e; // Re-throw to see the error
             }
-        } elseif ($user->phone) {
-            $this->winSMSService->sendSMS($user->phone, $message);
         }
         
         return $code;

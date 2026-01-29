@@ -68,11 +68,20 @@ class AccountSettings extends Settings
 
     public string $auth_laravelpassport_userinfo_uri;
 
-    public bool $mtcaptcha_enabled = false;
+    public bool $mtcaptcha_enabled;
 
-    public string $mtcaptcha_site_key = 'MTPublic-xjuhrIxme';
+    public string $mtcaptcha_site_key;
 
-    public string $mtcaptcha_private_key = 'MTPrivat-xjuhrIxme-WO9nthpEif21agfgmW70Tv7A2aWPnuZdMhX1pp29uR6AZTPA50';
+    public string $mtcaptcha_private_key;
+
+    public static function defaults(): array
+    {
+        return [
+            'mtcaptcha_enabled' => env('MTCAPTCHA_ENABLED', false),
+            'mtcaptcha_site_key' => env('MTCAPTCHA_SITE_KEY', ''),
+            'mtcaptcha_private_key' => env('MTCAPTCHA_PRIVATE_KEY', ''),
+        ];
+    }
 
     public static function group(): string
     {

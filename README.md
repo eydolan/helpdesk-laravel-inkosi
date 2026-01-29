@@ -10,6 +10,9 @@ The key features of Laravel Helpdesk include:
 2. Ticket Management: Admins can view, assign, or close tickets submitted by users.
 3. Ticket Prioritization: Users can prioritize their tickets to emphasize the level of urgency.
 4. History and Tracking: The system records all activities and conversations within tickets, allowing for easy tracking and auditing.
+5. Dual Authentication: Users can login using either their email address or phone number.
+6. Password Reset: Support for password reset via both email and SMS (using WinSMS gateway).
+7. User-Friendly Interface: Modern Filament-based admin panel with consistent design throughout.
 
 This Laravel Helpdesk repository will provide a solid foundation for building a customizable and extensible helpdesk system according to your specific needs. By utilizing Laravel as the main framework, this project offers user-friendliness, flexibility, and good performance.
 
@@ -42,6 +45,24 @@ Feel free to explore this repository and start building a robust and responsive 
 * Setup configuration: `cp .env.example .env`
 * Generate application key: `php artisan key:generate`
 * Create a database and update your configuration.
+* Configure mail settings in `.env` (for email-based password resets):
+  ```
+  MAIL_MAILER=smtp
+  MAIL_HOST=your-smtp-host
+  MAIL_PORT=587
+  MAIL_USERNAME=your-email
+  MAIL_PASSWORD=your-password
+  MAIL_ENCRYPTION=tls
+  MAIL_FROM_ADDRESS=noreply@example.com
+  MAIL_FROM_NAME="${APP_NAME}"
+  ```
+* Configure WinSMS settings in `.env` (optional, for SMS-based password resets):
+  ```
+  WINSMS_API_KEY=your-winsms-api-key
+  WINSMS_USERNAME=your-winsms-username
+  WINSMS_SENDER_ID=your-sender-id
+  WINSMS_API_URL=https://www.winsms.co.za/api/batchmessage.asp
+  ```
 * Run database migration: `php artisan migrate`
 * Run database seeder: `php artisan db:seed`
 * Create a symlink to the storage: `php artisan storage:link`

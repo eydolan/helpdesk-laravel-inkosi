@@ -10,7 +10,7 @@
 </div>
 
 @push('scripts')
-<script src="https://service.mtcaptcha.com/mtcv1/clientapi/mtcaptcha.min.js"></script>
+<script src="https://service.mtcaptcha.com/mtcv1/client/mtcaptcha.min.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         if (typeof mtcaptcha !== 'undefined') {

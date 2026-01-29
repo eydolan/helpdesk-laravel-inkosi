@@ -1,0 +1,76 @@
+QUICK STEPS TO REMOVE /public/ FROM URLS
+==========================================
+
+⚠️ BACKUP FIRST! ⚠️
+-------------------
+cd ~/public_html/help.inkosiconnect.co.za
+tar -czf ../backup-$(date +%Y%m%d).tar.gz .
+
+STEP 1: Move public/ contents to root
+--------------------------------------
+cd ~/public_html/help.inkosiconnect.co.za
+
+# Move all files from public/ to root
+mv public/* .
+mv public/.htaccess . 2>/dev/null || true
+
+# Remove empty public directory
+rmdir public
+
+STEP 2: Replace index.php
+--------------------------
+# Delete the old redirect index.php
+rm index.php
+
+# Copy the new index.php (from index.php.root)
+# Or manually edit index.php and change these 3 lines:
+
+Line 19: Change from:
+  if (file_exists($maintenance = __DIR__.'/../storage/framework/maintenance.php')) {
+To:
+  if (file_exists($maintenance = __DIR__.'/storage/framework/maintenance.php')) {
+
+Line 34: Change from:
+  require __DIR__.'/../vendor/autoload.php';
+To:
+  require __DIR__.'/vendor/autoload.php';
+
+Line 47: Change from:
+  $app = require_once __DIR__.'/../bootstrap/app.php';
+To:
+  $app = require_once __DIR__.'/bootstrap/app.php';
+
+STEP 3: Update .htaccess
+------------------------
+# Replace root .htaccess with the new one (.htaccess.root)
+# Or use the content from .htaccess.root file
+
+STEP 4: Protect Laravel Directories
+------------------------------------
+# Create .htaccess files in these directories to prevent web access:
+
+for dir in app bootstrap config database resources routes storage tests vendor; do
+  echo "Order deny,allow" > "$dir/.htaccess"
+  echo "Deny from all" >> "$dir/.htaccess"
+done
+
+STEP 5: Test
+------------
+Visit: https://help.inkosiconnect.co.za/
+Should work WITHOUT /public/ in URL!
+
+STEP 6: Clean Up
+----------------
+# Remove old redirect files if they exist
+rm index.html 2>/dev/null || true
+
+# Verify permissions
+chmod 644 index.php
+chmod 644 .htaccess
+chmod 755 storage
+chmod 755 bootstrap/cache
+
+DONE!
+-----
+Your site should now work at: https://help.inkosiconnect.co.za/
+No more /public/ in URLs!

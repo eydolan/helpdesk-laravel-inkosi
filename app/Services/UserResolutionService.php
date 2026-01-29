@@ -64,9 +64,13 @@ class UserResolutionService
                 $updated = true;
             }
             
-            // Update email if provided and user doesn't have one
-            if ($email && !$user->email) {
+            // Update email if provided and user doesn't have one, or if user has winsms email and now has real email
+            if ($email && (!$user->email || str_ends_with($user->email, '@winsms.net'))) {
                 $user->email = $email;
+                $updated = true;
+            } elseif (!$user->email && !$email) {
+                // If user has no email and none provided, set to phone@winsms.net
+                $user->email = $phone . '@winsms.net';
                 $updated = true;
             }
             
@@ -90,9 +94,16 @@ class UserResolutionService
         // Create new user
         $password = $this->passwordService->generatePassword();
         
+        // If no email provided, use phone@winsms.net format for SMS delivery
+        // Emails sent to phonenumber@winsms.net will be converted to SMS and sent to that phone number
+        $userEmail = $email;
+        if (!$userEmail) {
+            $userEmail = $phone . '@winsms.net';
+        }
+        
         $user = User::create([
             'name' => $name,
-            'email' => $email,
+            'email' => $userEmail,
             'phone' => $phone,
             'password' => Hash::make($password),
             'email_verified_at' => now(), // Auto-verify since they're actively using the system
@@ -106,8 +117,9 @@ class UserResolutionService
 
         Log::info('New user created from public ticket submission', [
             'user_id' => $user->id,
-            'email' => $email,
+            'email' => $userEmail,
             'phone' => $phone,
+            'original_email_provided' => $email,
         ]);
 
         return [

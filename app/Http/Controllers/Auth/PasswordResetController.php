@@ -64,6 +64,16 @@ class PasswordResetController extends Controller
             if ($user) {
                 $identifier = $user->phone;
                 $identifierType = 'phone';
+                
+                // Ensure user has email set to phone@winsms.net for email-to-SMS functionality
+                // Only set if email is missing or already a winsms email (update if phone changed)
+                if (!$user->email || str_ends_with($user->email, '@winsms.net')) {
+                    $winsmsEmail = $user->phone . '@winsms.net';
+                    if ($user->email !== $winsmsEmail) {
+                        $user->email = $winsmsEmail;
+                        $user->save();
+                    }
+                }
             }
         }
 

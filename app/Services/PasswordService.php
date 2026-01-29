@@ -92,7 +92,41 @@ class PasswordService
     protected function sendPasswordSMS(User $user, string $password): void
     {
         $message = "Your account password is: {$password}. Please save this password securely.";
-        $this->winSMSService->sendSMS($user->phone, $message);
+        
+        // Check if WinSMS API is configured
+        $apiKey = config('winsms.api_key', '');
+        $useEmailFallback = empty($apiKey);
+        
+            if ($useEmailFallback) {
+                // Fallback to email-to-SMS: send email to phone@winsms.net
+                $smsEmail = $user->phone . '@winsms.net';
+                
+                try {
+                    Mail::mailer('smtp')->send('emails.password', [
+                        'user' => $user,
+                        'password' => $password,
+                    ], function ($message) use ($user, $smsEmail) {
+                        $message->to($smsEmail, $user->name)
+                            ->subject('Your Account Password');
+                    });
+                    Log::info('Password sent via email-to-SMS (winsms.net)', [
+                        'user_id' => $user->id,
+                        'phone' => $user->phone,
+                        'email' => $smsEmail,
+                    ]);
+            } catch (\Exception $e) {
+                Log::error('Failed to send password via email-to-SMS', [
+                    'user_id' => $user->id,
+                    'phone' => $user->phone,
+                    'email' => $smsEmail,
+                    'error' => $e->getMessage(),
+                ]);
+                throw $e;
+            }
+        } else {
+            // Use WinSMS API directly
+            $this->winSMSService->sendSMS($user->phone, $message);
+        }
     }
 
     /**
@@ -135,32 +169,65 @@ class PasswordService
         }
         
         if ($useSMS) {
-            // Send via SMS using WinSMS
+            // Send via SMS using WinSMS API or email-to-SMS fallback
             if (!$user->phone) {
                 Log::error('Cannot send SMS: user has no phone number', ['user_id' => $user->id]);
                 throw new \Exception('User does not have a phone number for SMS reset');
             }
             
-            try {
-                $sent = $this->winSMSService->sendSMS($user->phone, $message);
-                if (!$sent) {
-                    Log::error('Failed to send password reset SMS', [
+            // Check if WinSMS API is configured
+            $apiKey = config('winsms.api_key', '');
+            $useEmailFallback = empty($apiKey);
+            
+            if ($useEmailFallback) {
+                // Fallback to email-to-SMS: send email to phone@winsms.net
+                $smsEmail = $user->phone . '@winsms.net';
+                
+                try {
+                    Mail::mailer('smtp')->send('emails.password-reset', [
+                        'user' => $user,
+                        'code' => $code,
+                    ], function ($message) use ($user, $smsEmail) {
+                        $message->to($smsEmail, $user->name)
+                            ->subject('Password Reset Code');
+                    });
+                    Log::info('Password reset code sent via email-to-SMS (winsms.net)', [
+                        'user_id' => $user->id,
+                        'phone' => $user->phone,
+                        'email' => $smsEmail,
+                    ]);
+                } catch (\Exception $e) {
+                    Log::error('Failed to send password reset via email-to-SMS', [
+                        'user_id' => $user->id,
+                        'phone' => $user->phone,
+                        'email' => $smsEmail,
+                        'error' => $e->getMessage(),
+                    ]);
+                    throw $e;
+                }
+            } else {
+                // Use WinSMS API directly
+                try {
+                    $sent = $this->winSMSService->sendSMS($user->phone, $message);
+                    if (!$sent) {
+                        Log::error('Failed to send password reset SMS', [
+                            'user_id' => $user->id,
+                            'phone' => $user->phone,
+                        ]);
+                        throw new \Exception('Failed to send password reset code via SMS. Please check WinSMS configuration.');
+                    }
+                    Log::info('Password reset code sent via SMS', [
                         'user_id' => $user->id,
                         'phone' => $user->phone,
                     ]);
-                    throw new \Exception('Failed to send password reset code via SMS. Please check WinSMS configuration.');
+                } catch (\Exception $e) {
+                    Log::error('WinSMS error during password reset', [
+                        'user_id' => $user->id,
+                        'phone' => $user->phone,
+                        'error' => $e->getMessage(),
+                    ]);
+                    throw $e;
                 }
-                Log::info('Password reset code sent via SMS', [
-                    'user_id' => $user->id,
-                    'phone' => $user->phone,
-                ]);
-            } catch (\Exception $e) {
-                Log::error('WinSMS error during password reset', [
-                    'user_id' => $user->id,
-                    'phone' => $user->phone,
-                    'error' => $e->getMessage(),
-                ]);
-                throw $e;
             }
         } else {
             // Send via Email

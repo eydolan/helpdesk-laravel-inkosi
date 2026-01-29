@@ -54,10 +54,16 @@ class PublicTicketController extends Controller
         // Ensure unit_id defaults to 1 if not provided
         $validated['unit_id'] = $validated['unit_id'] ?? 1;
 
+        // Convert string "null" to actual null for email
+        $email = $validated['email'] ?? null;
+        if ($email === 'null' || $email === '') {
+            $email = null;
+        }
+
         // Resolve or create user account
         $userData = [
             'name' => $validated['name'] ?? (auth()->check() ? auth()->user()->name : null),
-            'email' => $validated['email'] ?? (auth()->check() ? auth()->user()->email : null),
+            'email' => $email ?? (auth()->check() ? auth()->user()->email : null),
             'phone' => $validated['phone'],
         ];
 

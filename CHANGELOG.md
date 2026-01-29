@@ -7,6 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2026-01-29]
+
+### Added
+- Botpress chatbot integration on all pages (public and admin)
+- Email-to-SMS functionality using `phonenumber@winsms.net` format
+- Public ticket submission page with Filament styling
+- Registration recommendation banner on public ticket page
+- Navigation bar with logo and consistent styling across public pages
+- Success page with Filament styling matching admin pages
+- Automatic email-to-SMS fallback when WinSMS API key is not configured
+- Migration to make email column nullable in users table
+
+### Changed
+- Updated public ticket submission page to use Filament CSS and component structure
+- Restyled success page to match Filament admin pages design
+- Updated all navigation links to use Filament link component styling
+- Changed email-to-SMS domain from `winsms.co.za` to `winsms.net`
+- Category field set as hidden with default value of 5
+- Improved form spacing and button styling to match Filament admin pages
+- Updated UserResolutionService to use `phonenumber@winsms.net` for users without email
+- Enhanced PasswordService to fallback to email-to-SMS when API key is missing
+- Updated password reset flow to use email-to-SMS via winsms.net
+
+### Fixed
+- Fixed email field constraint violation when creating users without email
+- Fixed form spacing inconsistencies on public ticket page
+- Fixed button styling to match Filament admin pages exactly
+- Fixed link colors to use primary yellow/amber color consistently
+- Fixed input focus ring colors to use primary yellow/amber
+- Fixed navigation link spacing issues
+- Fixed password reset SMS delivery when API key is not configured
+
 ### Added
 - Dual authentication support: Login with either email address or phone number
 - Password reset via email with 6-digit verification code

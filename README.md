@@ -11,8 +11,11 @@ The key features of Laravel Helpdesk include:
 3. Ticket Prioritization: Users can prioritize their tickets to emphasize the level of urgency.
 4. History and Tracking: The system records all activities and conversations within tickets, allowing for easy tracking and auditing.
 5. Dual Authentication: Users can login using either their email address or phone number.
-6. Password Reset: Support for password reset via both email and SMS (using WinSMS gateway).
+6. Password Reset: Support for password reset via both email and SMS (using WinSMS gateway or email-to-SMS via winsms.net).
 7. User-Friendly Interface: Modern Filament-based admin panel with consistent design throughout.
+8. Public Ticket Submission: Beautiful public-facing ticket submission form matching admin panel styling.
+9. Botpress Chatbot Integration: Chatbot available on all pages for customer support.
+10. Email-to-SMS: Automatic SMS delivery via email-to-SMS gateway (phonenumber@winsms.net) when API is not configured.
 
 This Laravel Helpdesk repository will provide a solid foundation for building a customizable and extensible helpdesk system according to your specific needs. By utilizing Laravel as the main framework, this project offers user-friendliness, flexibility, and good performance.
 
@@ -63,6 +66,8 @@ Feel free to explore this repository and start building a robust and responsive 
   WINSMS_SENDER_ID=your-sender-id
   WINSMS_API_URL=https://www.winsms.co.za/api/batchmessage.asp
   ```
+  
+  **Note:** If WinSMS API key is not configured, the system will automatically use email-to-SMS functionality by sending emails to `phonenumber@winsms.net`. These emails are automatically converted to SMS by WinSMS and delivered to the phone number.
 * Run database migration: `php artisan migrate`
 * Run database seeder: `php artisan db:seed`
 * Create a symlink to the storage: `php artisan storage:link`

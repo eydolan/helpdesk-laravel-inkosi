@@ -30,7 +30,6 @@ This fork includes the following additional features and enhancements:
 
 This Laravel Helpdesk repository will provide a solid foundation for building a customizable and extensible helpdesk system according to your specific needs. By utilizing Laravel as the main framework, this project offers user-friendliness, flexibility, and good performance.
 
-Feel free to explore this repository and start building a robust and responsive helpdesk application using Laravel Helpdesk!
 
 <hr/>
 

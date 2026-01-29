@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Spatie\Permission\Models\Role;
 
 class UserResolutionService
 {
@@ -109,6 +110,13 @@ class UserResolutionService
             'email_verified_at' => now(), // Auto-verify since they're actively using the system
             'is_active' => true,
         ]);
+
+        // Assign default "Customer" role to new users
+        $customerRole = Role::firstOrCreate([
+            'name' => 'Customer',
+            'guard_name' => 'web',
+        ]);
+        $user->assignRole($customerRole);
 
         // Send password if requested
         if ($sendPassword) {

@@ -41,5 +41,10 @@ class RoleSeeder extends Seeder
             'name' => 'Global Staff',
             'guard_name' => 'web',
         ]);
+
+        Role::updateOrCreate([
+            'name' => 'Customer',
+            'guard_name' => 'web',
+        ]);
     }
 }

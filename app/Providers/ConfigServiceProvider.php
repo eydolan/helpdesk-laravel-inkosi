@@ -95,14 +95,23 @@ class ConfigServiceProvider extends ServiceProvider
             config(['mail.default' => $mailSettings->mailer]);
 
             if ($mailSettings->mailer == 'smtp') {
+                // Determine encryption based on port (465 = ssl, 587 = tls, others = null)
+                $encryption = null;
+                if ($mailSettings->smtp_port == 465) {
+                    $encryption = 'ssl';
+                } elseif ($mailSettings->smtp_port == 587) {
+                    $encryption = 'tls';
+                }
+                
                 config(['mail.mailers.smtp' => [
                     'transport' => 'smtp',
-                    'scheme' => $mailSettings->smtp_scheme ?? 'smtp',
                     'host' => $mailSettings->smtp_host,
                     'port' => $mailSettings->smtp_port,
+                    'encryption' => $encryption,
                     'username' => $mailSettings->smtp_username ?? '',
                     'password' => $mailSettings->smtp_password ?? '',
-                    'local_domain' => $mailSettings->smtp_localdomain,
+                    'timeout' => null,
+                    'local_domain' => $mailSettings->smtp_localdomain ?? parse_url((string) config('app.url', 'http://localhost'), PHP_URL_HOST),
                 ]]);
             }
 

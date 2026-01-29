@@ -13,6 +13,10 @@ class CommentObserver
     public function created(Comment $comment): void
     {
         $authUser = auth()->user();
+        
+        // Eager load ticket with necessary relationships to avoid N+1 queries
+        $comment->loadMissing(['ticket.owner', 'ticket.responsible', 'ticket.comments.user']);
+        
         $subscribers = $comment->ticket->getSubscribers();
 
         if ($subscribers->has($authUser->id)) {

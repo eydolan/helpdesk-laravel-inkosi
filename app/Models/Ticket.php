@@ -83,8 +83,13 @@ class Ticket extends Model
             $subscribers[$this->responsible->id] = $this->responsible;
         }
 
+        // Eager load comments with users to avoid N+1 queries
+        $this->loadMissing('comments.user');
+        
         $this->comments->each(function ($comment) use (&$subscribers) {
-            $subscribers->put($comment->user->id, $comment->user);
+            if ($comment->user) {
+                $subscribers->put($comment->user->id, $comment->user);
+            }
         });
 
         $accountSettings = app(AccountSettings::class);

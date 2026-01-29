@@ -65,6 +65,10 @@ class TicketObserver
             )
         ) {
             $authUser = auth()->user();
+            
+            // Eager load relationships to avoid N+1 queries
+            $ticket->loadMissing(['owner', 'responsible', 'comments.user']);
+            
             $subscribers = $ticket->getSubscribers();
 
             if ($subscribers->has($authUser->id)) {

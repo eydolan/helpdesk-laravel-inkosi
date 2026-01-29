@@ -362,21 +362,23 @@ class TicketResource extends Resource
      */
     public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery()->where(function ($query) {
-            $user = auth()->user();
+        return parent::getEloquentQuery()
+            ->with(['owner', 'responsible', 'category', 'priority', 'unit', 'ticketStatus']) // Eager load relationships
+            ->where(function ($query) {
+                $user = auth()->user();
 
-            if ($user->hasAnyRole(['Super Admin', 'Global Viewer'])) {
-                return;
-            }
+                if ($user->hasAnyRole(['Super Admin', 'Global Viewer'])) {
+                    return;
+                }
 
-            if ($user->hasAnyRole(['Admin Unit', 'Unit Viewer'])) {
-                $query->where('tickets.unit_id', $user->unit_id)->orWhere('tickets.owner_id', $user->id);
-            } elseif ($user->hasRole('Staff Unit')) {
-                $query->where('tickets.responsible_id', $user->id)->orWhere('tickets.owner_id', $user->id);
-            } else {
-                $query->where('tickets.owner_id', $user->id);
-            }
-        })
+                if ($user->hasAnyRole(['Admin Unit', 'Unit Viewer'])) {
+                    $query->where('tickets.unit_id', $user->unit_id)->orWhere('tickets.owner_id', $user->id);
+                } elseif ($user->hasRole('Staff Unit')) {
+                    $query->where('tickets.responsible_id', $user->id)->orWhere('tickets.owner_id', $user->id);
+                } else {
+                    $query->where('tickets.owner_id', $user->id);
+                }
+            })
             ->withoutGlobalScopes([SoftDeletingScope::class]);
     }
 }

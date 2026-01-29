@@ -9,56 +9,13 @@ class UserSeeder extends Seeder
 {
     /**
      * Run the database seeds.
+     * 
+     * Note: This seeder no longer creates dummy accounts.
+     * Create your own admin user manually after running migrations.
      */
     public function run(): void
     {
-        // 1. create a super admin
-        $superAdmin = User::updateOrCreate(
-            ['email' => 'superadmin@example.com'],
-            [
-                'name' => 'Super Admin',
-                'password' => bcrypt('password'),
-                'is_active' => true,
-                'email_verified_at' => now(),
-            ]
-        );
-        $superAdmin->syncRoles('Super Admin');
-
-        // 2. create a admin unit
-        $adminUnit = User::updateOrCreate(
-            ['email' => 'adminunit@example.com'],
-            [
-                'name' => 'Admin Unit',
-                'password' => bcrypt('password'),
-                'unit_id' => 1,
-                'is_active' => true,
-                'email_verified_at' => now(),
-            ]
-        );
-        $adminUnit->syncRoles('Admin Unit');
-
-        // 3. create a staff unit
-        $staffUnit = User::updateOrCreate(
-            ['email' => 'staffunit@example.com'],
-            [
-                'name' => 'Staff Unit',
-                'password' => bcrypt('password'),
-                'unit_id' => 1,
-                'is_active' => true,
-                'email_verified_at' => now(),
-            ]
-        );
-        $staffUnit->syncRoles('Staff Unit');
-
-        // 4. create a user
-        $user = User::updateOrCreate(
-            ['email' => 'user@example.com'],
-            [
-                'name' => 'User',
-                'password' => bcrypt('password'),
-                'is_active' => true,
-                'email_verified_at' => now(),
-            ]
-        );
+        // Dummy accounts removed for security.
+        // Please create your admin user manually via the registration page or tinker.
     }
 }

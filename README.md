@@ -1,21 +1,32 @@
  <img src="screenshot/create-ticket.png" width="100%"></img> 
 ## Helpdesk Laravel
 
-The Helpdesk Laravel repository is a project aimed at providing a web-based helpdesk system using the [**Laravel Framewrok v10**](https://laravel.com)   and [**Filament v2**](https://github.com/filamentphp). Helpdesk is a system that allows users to submit questions, request assistance, or report issues related to a company's products or services.
+This is a fork of the original [ruswan/laravel_helpdesk](https://github.com/ruswan/laravel_helpdesk) system, adapted to our specific needs. The original project provides a web-based helpdesk system using the [**Laravel Framework v10**](https://laravel.com) and [**Filament v2**](https://github.com/filamentphp).
 
-In this repository, you will find the complete source code implemented using Laravel, a popular and powerful PHP framework. This project is designed to assist web developers in building and managing helpdesk systems with ease.
+### Additional Features
 
-The key features of Laravel Helpdesk include:
-1. Ticket Submission: Users can submit new tickets containing their questions, assistance requests, or issue reports.
-2. Ticket Management: Admins can view, assign, or close tickets submitted by users.
-3. Ticket Prioritization: Users can prioritize their tickets to emphasize the level of urgency.
-4. History and Tracking: The system records all activities and conversations within tickets, allowing for easy tracking and auditing.
-5. Dual Authentication: Users can login using either their email address or phone number.
-6. Password Reset: Support for password reset via both email and SMS (using WinSMS gateway or email-to-SMS via winsms.net).
-7. User-Friendly Interface: Modern Filament-based admin panel with consistent design throughout.
-8. Public Ticket Submission: Beautiful public-facing ticket submission form matching admin panel styling.
-9. Botpress Chatbot Integration: Chatbot available on all pages for customer support.
-10. Email-to-SMS: Automatic SMS delivery via email-to-SMS gateway (phonenumber@winsms.net) when API is not configured.
+This fork includes the following additional features and enhancements:
+
+1. **Dual Authentication**: Users can login using either their email address or phone number
+2. **Password Reset via Email**: Support for password reset via email with 6-digit verification code
+3. **Password Reset via SMS**: Password reset via SMS (phone) using WinSMS gateway integration
+4. **Email-to-SMS Functionality**: Automatic SMS delivery via email-to-SMS gateway (`phonenumber@winsms.net`) when API is not configured
+5. **Public Ticket Submission**: Beautiful public-facing ticket submission form matching Filament admin panel styling
+6. **Botpress Chatbot Integration**: Chatbot available on all pages (public and admin) for customer support
+7. **Registration Recommendation**: Banner on public ticket page encouraging user registration for better ticket tracking
+8. **Consistent Filament Styling**: All public pages (ticket submission, success page, password reset) styled to match Filament admin pages
+9. **Navigation Bar**: Logo and consistent navigation styling across all public pages
+10. **Flexible User Creation**: Support for users without email addresses (uses `phonenumber@winsms.net` format)
+11. **Case-Insensitive Email Lookup**: Improved authentication with case-insensitive email matching
+12. **Enhanced Password Reset Flow**: Unified password reset flow supporting both email and SMS methods
+13. **Custom Filament Password Reset Pages**: Password reset pages matching Filament design system
+14. **WinSMS Service Integration**: Full integration with WinSMS API for SMS-based operations
+15. **Automatic Fallback Mechanisms**: Email-to-SMS fallback when WinSMS API key is not configured
+16. **Improved Form Styling**: Form elements, buttons, and links styled to match Filament admin pages exactly
+17. **Enhanced User Resolution Service**: Smart user creation/resolution with email-to-SMS support
+18. **Security Improvements**: Time-limited verification codes for password resets
+19. **Database Schema Enhancements**: Email column made nullable to support phone-only users
+20. **Password Reset Code Verification**: Secure code-based password reset verification flow
 
 This Laravel Helpdesk repository will provide a solid foundation for building a customizable and extensible helpdesk system according to your specific needs. By utilizing Laravel as the main framework, this project offers user-friendliness, flexibility, and good performance.
 
@@ -69,25 +80,10 @@ Feel free to explore this repository and start building a robust and responsive 
   
   **Note:** If WinSMS API key is not configured, the system will automatically use email-to-SMS functionality by sending emails to `phonenumber@winsms.net`. These emails are automatically converted to SMS by WinSMS and delivered to the phone number.
 * Run database migration: `php artisan migrate`
-* Run database seeder: `php artisan db:seed`
 * Create a symlink to the storage: `php artisan storage:link`
 * Run the dev server: `php artisan serve`
 
-<hr/>
-
-## Dummy Account
-### Super Admin
-> - Email: superadmin@example.com
-> - Password: password
-### Admin Unit
-> - Email: adminunit@example.com
-> - Password: password
-### Staff Unit
-> - Email: staffunit@example.com
-> - Password: password
-### General User
-> - Email: user@example.com
-> - Password: password
+**Note:** This fork does not include dummy accounts. You will need to create your own admin user after running migrations.
 
 ## Super Admin Preview
  <img src="screenshot/super-admin.png" width="100%"></img> 

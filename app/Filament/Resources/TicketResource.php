@@ -21,6 +21,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\HtmlString;
 
 class TicketResource extends Resource
 {
@@ -172,15 +173,41 @@ class TicketResource extends Resource
 
                     Forms\Components\Placeholder::make('owner_id')
                         ->label(__('Owner'))
-                        ->content(function (?Ticket $record): string {
+                        ->content(function (?Ticket $record): HtmlString|string {
                             if (!$record) {
                                 return '-';
                             }
                             if ($record->owner) {
-                                return $record->owner->name;
+                                $html = '<div class="space-y-1">';
+                                $html .= '<div class="font-semibold">' . e($record->owner->name) . '</div>';
+                                
+                                // Add phone number if available
+                                if ($record->owner->phone) {
+                                    $html .= '<div class="text-sm text-gray-600 dark:text-gray-400">📱 ' . e($record->owner->phone) . '</div>';
+                                }
+                                
+                                // Add email if available (and not @winsms.net)
+                                if ($record->owner->email && !str_ends_with($record->owner->email, '@winsms.net')) {
+                                    $html .= '<div class="text-sm text-gray-600 dark:text-gray-400">✉️ ' . e($record->owner->email) . '</div>';
+                                } elseif ($record->owner->email && str_ends_with($record->owner->email, '@winsms.net') && $record->owner->phone) {
+                                    // Show SMS indicator for winsms.net emails
+                                    $html .= '<div class="text-sm text-gray-600 dark:text-gray-400">📱 SMS: ' . e($record->owner->phone) . '</div>';
+                                }
+                                
+                                $html .= '</div>';
+                                return new HtmlString($html);
                             }
                             // Show guest info if owner is null
-                            return $record->guest_name ?? 'Guest';
+                            $html = '<div class="space-y-1">';
+                            $html .= '<div class="font-semibold">' . e($record->guest_name ?? 'Guest') . '</div>';
+                            if ($record->guest_phone) {
+                                $html .= '<div class="text-sm text-gray-600 dark:text-gray-400">📱 ' . e($record->guest_phone) . '</div>';
+                            }
+                            if ($record->guest_email) {
+                                $html .= '<div class="text-sm text-gray-600 dark:text-gray-400">✉️ ' . e($record->guest_email) . '</div>';
+                            }
+                            $html .= '</div>';
+                            return new HtmlString($html);
                         }),
                     
                     Forms\Components\Placeholder::make('guest_info')

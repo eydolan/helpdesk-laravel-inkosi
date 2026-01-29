@@ -68,14 +68,10 @@ class CommentsRelationManager extends RelationManager
             ]);
     }
 
-    protected function getTableQuery(): \Illuminate\Database\Eloquent\Builder
-    {
-        return parent::getTableQuery()->with('user'); // Eager load user to avoid N+1 queries
-    }
-
     public function table(Table $table): Table
     {
         return $table
+            ->modifyQueryUsing(fn ($query) => $query->with('user')) // Eager load user to avoid N+1 queries
             ->modelLabel(__('Comment'))
             ->columns([
                 Stack::make([

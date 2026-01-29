@@ -5,7 +5,7 @@
 <x-filament-panels::layout.simple>
     <x-filament-panels::header.simple
         :heading="__('Verify Reset Code')"
-        :subheading="__('Enter the 6-digit code sent to your ' . (isset($email) && $email ? 'email address' : 'phone number') . '.')"
+        :subheading="__('Enter the 6-digit code sent to your ' . (isset($email) && $email ? 'email address' : (isset($phone) && $phone ? 'phone number' : 'email address or phone number')) . '.')"
         :logo="true"
     />
 
@@ -71,27 +71,33 @@
         @else
             <div class="fi-fo-field-wrp" data-field-wrapper>
                 <div class="grid gap-y-2">
-                    <label for="email" class="fi-fo-field-wrp-label inline-flex items-center gap-x-3">
+                    <label for="identifier" class="fi-fo-field-wrp-label inline-flex items-center gap-x-3">
                         <span class="text-sm font-medium leading-6 text-gray-950 dark:text-white">
-                            {{ __('Email Address') }} <sup class="text-danger-600 dark:text-danger-400 font-medium">*</sup>
+                            {{ __('Email Address or Phone Number') }} <sup class="text-danger-600 dark:text-danger-400 font-medium">*</sup>
                         </span>
                     </label>
                 </div>
                 <div class="grid auto-cols-fr gap-y-2">
-                    <div class="fi-input-wrp flex rounded-lg shadow-sm ring-1 transition duration-75 bg-white dark:bg-white/5 ring-gray-950/10 dark:ring-white/20 @error('email') fi-invalid ring-danger-600 dark:ring-danger-500 @enderror [&:not(:has(.fi-ac-action:focus))]:focus-within:ring-primary-600 dark:[&:not(:has(.fi-ac-action:focus))]:focus-within:ring-primary-500">
+                    <div class="fi-input-wrp flex rounded-lg shadow-sm ring-1 transition duration-75 bg-white dark:bg-white/5 ring-gray-950/10 dark:ring-white/20 @error('email') @error('phone') fi-invalid ring-danger-600 dark:ring-danger-500 @enderror @enderror [&:not(:has(.fi-ac-action:focus))]:focus-within:ring-primary-600 dark:[&:not(:has(.fi-ac-action:focus))]:focus-within:ring-primary-500">
                         <div class="fi-input-wrp-input min-w-0 flex-1 ps-3">
-                            <input type="email" 
+                            <input type="text" 
                                    class="fi-input block w-full border-none py-1.5 text-base text-gray-950 transition duration-75 placeholder:text-gray-400 focus:ring-0 dark:text-white dark:placeholder:text-gray-500 sm:text-sm sm:leading-6 bg-white/0 ps-0 pe-3" 
-                                   id="email" 
-                                   name="email" 
-                                   value="{{ old('email') }}" 
-                                   placeholder="{{ __('Enter your email address') }}"
+                                   id="identifier" 
+                                   name="identifier" 
+                                   value="{{ old('identifier', old('email', old('phone'))) }}" 
+                                   placeholder="{{ __('Enter your email address or phone number') }}"
                                    required>
                         </div>
                     </div>
                     @error('email')
                         <p class="fi-fo-field-wrp-error-message text-sm text-danger-600 dark:text-danger-400" data-validation-error>{{ $message }}</p>
                     @enderror
+                    @error('phone')
+                        <p class="fi-fo-field-wrp-error-message text-sm text-danger-600 dark:text-danger-400" data-validation-error>{{ $message }}</p>
+                    @enderror
+                    @if($errors->has('identifier'))
+                        <p class="fi-fo-field-wrp-error-message text-sm text-danger-600 dark:text-danger-400" data-validation-error>{{ $errors->first('identifier') }}</p>
+                    @endif
                 </div>
             </div>
         @endif
@@ -122,7 +128,7 @@
                     <p class="fi-fo-field-wrp-error-message text-sm text-danger-600 dark:text-danger-400" data-validation-error>{{ $message }}</p>
                 @enderror
                 <p class="fi-fo-field-wrp-hint text-sm text-gray-500 dark:text-gray-400">
-                    {{ __('Enter the 6-digit code sent to your ' . (isset($email) && $email ? 'email address' : 'phone number') . '.') }}
+                    {{ __('Enter the 6-digit code sent to your ' . (isset($email) && $email ? 'email address' : (isset($phone) && $phone ? 'phone number' : 'email address or phone number')) . '.') }}
                 </p>
             </div>
         </div>

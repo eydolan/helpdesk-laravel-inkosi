@@ -15,12 +15,25 @@ class Login extends BaseLogin
 {
     protected static string $view = 'filament.pages.auth.custom-login';
 
+    /**
+     * Override email form component to use text input instead of email input
+     * This allows both email and phone number login
+     */
+    protected function getEmailFormComponent(): Component
+    {
+        return TextInput::make('email')
+            ->label('Email or Phone')
+            ->helperText('Enter your email address or phone number')
+            ->required()
+            ->autocomplete()
+            ->autofocus()
+            ->extraInputAttributes(['tabindex' => 1]);
+    }
+
     protected function getForms(): array
     {
         $components = [
-            $this->getEmailFormComponent()
-                ->label('Email or Phone')
-                ->helperText('Enter your email address or phone number'),
+            $this->getEmailFormComponent(),
             $this->getPasswordFormComponent(),
             $this->getRememberFormComponent(),
         ];

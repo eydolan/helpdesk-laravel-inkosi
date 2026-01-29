@@ -154,23 +154,45 @@ class PasswordResetController extends Controller
      */
     public function verifyResetCode(Request $request)
     {
-        // Get email/phone from request or session
-        $email = $request->input('email') ?: session('email');
-        $phone = $request->input('phone') ?: session('phone');
+        // Get email/phone from session first (set when code was sent)
+        $sessionEmail = session('email');
+        $sessionPhone = session('phone');
         
+        // Get from request (form submission)
+        $requestEmail = $request->input('email');
+        $requestPhone = $request->input('phone');
+        $identifier = $request->input('identifier');
+        
+        // Determine final email/phone values
+        $email = $requestEmail ?: $sessionEmail;
+        $phone = $requestPhone ?: $sessionPhone;
+        
+        // If identifier field is used (when no email/phone in session), determine type
+        if ($identifier && !$email && !$phone) {
+            if (filter_var($identifier, FILTER_VALIDATE_EMAIL)) {
+                $email = $identifier;
+            } else {
+                $phone = $identifier;
+            }
+        }
+        
+        // Validate code
         $validated = $request->validate([
-            'email' => $email ? 'nullable|email' : 'required_without:phone|email',
-            'phone' => $phone ? 'nullable|string' : 'required_without:email|string',
             'code' => 'required|string|size:6',
         ]);
-
-        // Use validated data or fallback to session/request
-        $validated['email'] = $validated['email'] ?? $email;
-        $validated['phone'] = $validated['phone'] ?? $phone;
-
-        if (empty($validated['email']) && empty($validated['phone'])) {
-            return back()->withErrors(['email' => 'Email or phone number is required.'])->withInput();
+        
+        // Ensure we have exactly one identifier (email OR phone)
+        if (empty($email) && empty($phone)) {
+            return back()->withErrors(['identifier' => 'Email or phone number is required.'])->withInput();
         }
+        
+        if (!empty($email) && !empty($phone)) {
+            return back()->withErrors(['identifier' => 'Please provide either an email address or phone number, not both.'])->withInput();
+        }
+        
+        // Set validated values
+        $validated['email'] = $email;
+        $validated['phone'] = $phone;
 
         $query = PasswordResetCode::where('code', $validated['code'])
             ->whereNull('used_at')

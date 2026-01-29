@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2026-01-29] (Continued)
+
+### Fixed
+- Fixed password reset verification form to properly handle email OR phone (not both required)
+- Fixed login form validation to accept phone numbers without email format errors
+- Fixed phone number authentication by implementing phone number normalization
+- Improved phone number matching to handle different formats (spaces, dashes, etc.)
+- Fixed password reset verification page to show correct identifier field based on context
+- Removed hardcoded client secret default value from config/services.php for security
+
+### Changed
+- Updated login form component from email input to text input to support phone number login
+- Enhanced CustomUserProvider with phone number normalization for flexible matching
+- Improved password reset verification to automatically detect email vs phone from identifier field
+
 ## [2026-01-29]
 
 ### Added

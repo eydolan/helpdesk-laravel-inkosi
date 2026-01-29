@@ -1,4 +1,6 @@
- <img src="screenshot/create-ticket.png" width="100%"></img> 
+
+
+
 ## Helpdesk Laravel
 
 This is a fork of the original [ruswan/laravel_helpdesk](https://github.com/ruswan/laravel_helpdesk) system, adapted to our specific needs. The original project provides a web-based helpdesk system using the [**Laravel Framework v10**](https://laravel.com) and [**Filament v2**](https://github.com/filamentphp).
@@ -7,7 +9,7 @@ This is a fork of the original [ruswan/laravel_helpdesk](https://github.com/rusw
 
 This fork includes the following additional features and enhancements:
 
-1. **Dual Authentication**: Users can login using either their email address or phone number
+1. **Dual Authentication**: Users can login using either their email address or phone number (with flexible phone number format matching)
 2. **Password Reset via Email**: Support for password reset via email with 6-digit verification code
 3. **Password Reset via SMS**: Password reset via SMS (phone) using WinSMS gateway integration
 4. **Email-to-SMS Functionality**: Automatic SMS delivery via email-to-SMS gateway (`phonenumber@winsms.net`) when API is not configured
@@ -18,28 +20,20 @@ This fork includes the following additional features and enhancements:
 9. **Navigation Bar**: Logo and consistent navigation styling across all public pages
 10. **Flexible User Creation**: Support for users without email addresses (uses `phonenumber@winsms.net` format)
 11. **Case-Insensitive Email Lookup**: Improved authentication with case-insensitive email matching
-12. **Enhanced Password Reset Flow**: Unified password reset flow supporting both email and SMS methods
-13. **Custom Filament Password Reset Pages**: Password reset pages matching Filament design system
-14. **WinSMS Service Integration**: Full integration with WinSMS API for SMS-based operations
-15. **Automatic Fallback Mechanisms**: Email-to-SMS fallback when WinSMS API key is not configured
-16. **Improved Form Styling**: Form elements, buttons, and links styled to match Filament admin pages exactly
-17. **Enhanced User Resolution Service**: Smart user creation/resolution with email-to-SMS support
-18. **Security Improvements**: Time-limited verification codes for password resets
-19. **Database Schema Enhancements**: Email column made nullable to support phone-only users
-20. **Password Reset Code Verification**: Secure code-based password reset verification flow
+12. **Phone Number Normalization**: Automatic phone number format normalization for flexible login (handles spaces, dashes, etc.)
+13. **Enhanced Password Reset Flow**: Unified password reset flow supporting both email and SMS methods with proper validation
+14. **Custom Filament Password Reset Pages**: Password reset pages matching Filament design system
+15. **WinSMS Service Integration**: Full integration with WinSMS API for SMS-based operations
+16. **Automatic Fallback Mechanisms**: Email-to-SMS fallback when WinSMS API key is not configured
+17. **Improved Form Styling**: Form elements, buttons, and links styled to match Filament admin pages exactly
+18. **Enhanced User Resolution Service**: Smart user creation/resolution with email-to-SMS support
+19. **Security Improvements**: Time-limited verification codes for password resets, no hardcoded secrets
+20. **Database Schema Enhancements**: Email column made nullable to support phone-only users
+21. **Password Reset Code Verification**: Secure code-based password reset verification flow with email/phone detection
 
 This Laravel Helpdesk repository will provide a solid foundation for building a customizable and extensible helpdesk system according to your specific needs. By utilizing Laravel as the main framework, this project offers user-friendliness, flexibility, and good performance.
 
 
-<hr/>
-
-## Database Design
- <img src="screenshot/database-design.png" width="100%"></img> 
-
-<hr/>
-
-## Unified Modeling Language (UML)
-<img src="screenshot/uml.png" width="100%"></img> 
 <hr/>
 
 ## Requirements

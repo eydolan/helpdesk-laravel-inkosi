@@ -1,0 +1,18 @@
+# Files to Deploy - Copy these paths to your server
+
+app/Providers/ConfigServiceProvider.php
+app/Services/UserResolutionService.php
+app/Support/Notifications/Debounce.php
+app/Models/User.php
+app/Notifications/TicketCommentCreated.php
+app/Observers/CommentObserver.php
+database/seeders/RoleSeeder.php
+
+# Or upload entire folders:
+app/Providers/
+app/Services/
+app/Support/
+app/Models/
+app/Notifications/
+app/Observers/
+database/seeders/

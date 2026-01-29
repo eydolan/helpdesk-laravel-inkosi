@@ -18,8 +18,115 @@ class TicketObserver
      */
     public function created(Ticket $ticket): void
     {
-        $staffUsers = new Collection([]);
+        $authUser = auth()->user();
+        $notifiedUsers = collect([$authUser?->id])->filter(); // Track users we've notified to avoid duplicates
+        
+        // Eager load ticket owner to avoid N+1 queries
+        $ticket->loadMissing('owner');
 
+        // Notify ticket owner (if exists and not the creator)
+        if ($ticket->owner && $ticket->owner->id !== $authUser?->id) {
+            try {
+                \Log::info('Sending ticket created notification to ticket owner', [
+                    'ticket_id' => $ticket->id,
+                    'owner_id' => $ticket->owner->id,
+                    'owner_email' => $ticket->owner->email,
+                ]);
+                
+                $ticket->owner->notify(new TicketCreated($ticket));
+                $notifiedUsers->push($ticket->owner->id);
+            } catch (\Exception $e) {
+                \Log::error('Failed to send ticket created notification to ticket owner', [
+                    'ticket_id' => $ticket->id,
+                    'owner_id' => $ticket->owner->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        // Notify Super Admin users
+        try {
+            $superAdmins = User::role('Super Admin')
+                ->whereNotNull('email')
+                ->when($accountSettings = app(AccountSettings::class)->user_email_verification, function ($query) {
+                    $query->whereNotNull('email_verified_at');
+                })
+                ->where('id', '!=', $authUser?->id)
+                ->get();
+            
+            $superAdmins->each(function ($user) use ($ticket, &$notifiedUsers) {
+                if (!$notifiedUsers->contains($user->id)) {
+                    try {
+                        \Log::info('Sending ticket created notification to Super Admin', [
+                            'ticket_id' => $ticket->id,
+                            'admin_id' => $user->id,
+                            'admin_email' => $user->email,
+                        ]);
+                        
+                        $user->notify(new TicketCreated($ticket));
+                        $notifiedUsers->push($user->id);
+                    } catch (\Exception $e) {
+                        \Log::error('Failed to send ticket created notification to Super Admin', [
+                            'ticket_id' => $ticket->id,
+                            'admin_id' => $user->id,
+                            'error' => $e->getMessage(),
+                        ]);
+                    }
+                }
+            });
+        } catch (\Exception $e) {
+            \Log::error('Failed to notify Super Admin users for ticket creation', [
+                'ticket_id' => $ticket->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+        // Notify Admin Unit users for this ticket's unit
+        if ($ticket->unit_id) {
+            try {
+                $accountSettings = app(AccountSettings::class);
+                
+                $adminUnitUsers = User::role('Admin Unit')
+                    ->where('unit_id', $ticket->unit_id)
+                    ->whereNotNull('email')
+                    ->when($accountSettings->user_email_verification, function ($query) {
+                        $query->whereNotNull('email_verified_at');
+                    })
+                    ->where('id', '!=', $authUser?->id)
+                    ->get();
+                
+                $adminUnitUsers->each(function ($user) use ($ticket, &$notifiedUsers) {
+                    if (!$notifiedUsers->contains($user->id)) {
+                        try {
+                            \Log::info('Sending ticket created notification to Admin Unit', [
+                                'ticket_id' => $ticket->id,
+                                'unit_id' => $ticket->unit_id,
+                                'admin_id' => $user->id,
+                                'admin_email' => $user->email,
+                            ]);
+                            
+                            $user->notify(new TicketCreated($ticket));
+                            $notifiedUsers->push($user->id);
+                        } catch (\Exception $e) {
+                            \Log::error('Failed to send ticket created notification to Admin Unit', [
+                                'ticket_id' => $ticket->id,
+                                'admin_id' => $user->id,
+                                'error' => $e->getMessage(),
+                            ]);
+                        }
+                    }
+                });
+            } catch (\Exception $e) {
+                \Log::error('Failed to notify Admin Unit users for ticket creation', [
+                    'ticket_id' => $ticket->id,
+                    'unit_id' => $ticket->unit_id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        // Notify Staff Unit and Global Staff (existing functionality)
+        $staffUsers = new Collection([]);
         $accountSettings = app(AccountSettings::class);
 
         $usersQuery = User::whereNotNull('email')
@@ -40,13 +147,24 @@ class TicketObserver
                 $staffUsers->put($user->id, $user);
             });
 
-        $authUser = auth()->user();
-
         if ($authUser && $staffUsers->has($authUser->id)) {
             $staffUsers->pull($authUser->id);
         }
 
-        $staffUsers->each(fn($user) => $user->notify(new TicketCreated($ticket)));
+        // Only notify staff users we haven't already notified
+        $staffUsers->reject(function ($user) use ($notifiedUsers) {
+            return $notifiedUsers->contains($user->id);
+        })->each(function ($user) use ($ticket) {
+            try {
+                $user->notify(new TicketCreated($ticket));
+            } catch (\Exception $e) {
+                \Log::error('Failed to send ticket created notification to staff', [
+                    'ticket_id' => $ticket->id,
+                    'staff_id' => $user->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        });
     }
 
     /**

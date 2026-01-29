@@ -3,6 +3,7 @@
 namespace App\Observers;
 
 use App\Models\Comment;
+use App\Models\User;
 use App\Notifications\TicketCommentCreated;
 use Illuminate\Notifications\AnonymousNotifiable;
 
@@ -112,6 +113,85 @@ class CommentObserver
                     'comment_id' => $comment->id,
                     'error' => $e->getMessage(),
                     'trace' => $e->getTraceAsString(),
+                ]);
+            }
+        }
+
+        // Notify Super Admin users
+        try {
+            $superAdmins = User::role('Super Admin')
+                ->whereNotNull('email')
+                ->where('id', '!=', $authUser->id)
+                ->get();
+            
+            $superAdmins->each(function ($user) use ($comment, $ticket, &$notifiedUsers) {
+                if (!$notifiedUsers->contains($user->id)) {
+                    try {
+                        \Log::info('Sending comment notification to Super Admin', [
+                            'ticket_id' => $ticket->id,
+                            'admin_id' => $user->id,
+                            'admin_email' => $user->email,
+                            'comment_id' => $comment->id,
+                        ]);
+                        
+                        $user->notify(new TicketCommentCreated($comment));
+                        $notifiedUsers->push($user->id);
+                    } catch (\Exception $e) {
+                        \Log::error('Failed to send comment notification to Super Admin', [
+                            'ticket_id' => $ticket->id,
+                            'admin_id' => $user->id,
+                            'comment_id' => $comment->id,
+                            'error' => $e->getMessage(),
+                        ]);
+                    }
+                }
+            });
+        } catch (\Exception $e) {
+            \Log::error('Failed to notify Super Admin users for comment', [
+                'ticket_id' => $ticket->id,
+                'comment_id' => $comment->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+        // Notify Admin Unit users for this ticket's unit
+        if ($ticket->unit_id) {
+            try {
+                $adminUnitUsers = User::role('Admin Unit')
+                    ->where('unit_id', $ticket->unit_id)
+                    ->whereNotNull('email')
+                    ->where('id', '!=', $authUser->id)
+                    ->get();
+                
+                $adminUnitUsers->each(function ($user) use ($comment, $ticket, &$notifiedUsers) {
+                    if (!$notifiedUsers->contains($user->id)) {
+                        try {
+                            \Log::info('Sending comment notification to Admin Unit', [
+                                'ticket_id' => $ticket->id,
+                                'unit_id' => $ticket->unit_id,
+                                'admin_id' => $user->id,
+                                'admin_email' => $user->email,
+                                'comment_id' => $comment->id,
+                            ]);
+                            
+                            $user->notify(new TicketCommentCreated($comment));
+                            $notifiedUsers->push($user->id);
+                        } catch (\Exception $e) {
+                            \Log::error('Failed to send comment notification to Admin Unit', [
+                                'ticket_id' => $ticket->id,
+                                'admin_id' => $user->id,
+                                'comment_id' => $comment->id,
+                                'error' => $e->getMessage(),
+                            ]);
+                        }
+                    }
+                });
+            } catch (\Exception $e) {
+                \Log::error('Failed to notify Admin Unit users for comment', [
+                    'ticket_id' => $ticket->id,
+                    'unit_id' => $ticket->unit_id,
+                    'comment_id' => $comment->id,
+                    'error' => $e->getMessage(),
                 ]);
             }
         }

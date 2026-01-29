@@ -13,6 +13,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\AnonymousNotifiable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
+use Illuminate\Support\HtmlString;
 use Illuminate\Support\Str;
 
 class TicketCreated extends Notification implements ShouldBeDebounce, ShouldQueue
@@ -88,12 +89,47 @@ class TicketCreated extends Notification implements ShouldBeDebounce, ShouldQueu
         $siteTitle = app(GeneralSettings::class)->site_title;
         $subjectPrefix = "[{$siteTitle}] ";
 
-        return (new MailMessage)
+        // Eager load relationships for email content
+        $this->ticket->loadMissing(['owner', 'category', 'priority', 'unit']);
+
+        $message = (new MailMessage)
             ->subject($subjectPrefix.__('Ticket #:ticket created', [
                 'ticket' => $this->ticket->id,
             ]))
-            ->greeting(__('Ticket').": {$this->ticket->title}")
-            ->action(__('View'), route('filament.admin.resources.tickets.view', $this->ticket));
+            ->greeting(__('New Ticket Created').": #{$this->ticket->id}")
+            ->line(__('Title').": {$this->ticket->title}");
+
+        // Add description
+        if ($this->ticket->description) {
+            $message->line(new HtmlString('<strong>'.__('Description').':</strong>'))
+                ->line(new HtmlString(nl2br(e($this->ticket->description))));
+        }
+
+        // Add ticket details
+        $details = [];
+        if ($this->ticket->owner) {
+            $details[] = __('Owner').": {$this->ticket->owner->name} ({$this->ticket->owner->email})";
+        }
+        if ($this->ticket->category) {
+            $details[] = __('Category').": {$this->ticket->category->name}";
+        }
+        if ($this->ticket->priority) {
+            $details[] = __('Priority').": {$this->ticket->priority->name}";
+        }
+        if ($this->ticket->unit) {
+            $details[] = __('Unit').": {$this->ticket->unit->name}";
+        }
+        if ($this->ticket->voucher_number) {
+            $details[] = __('Voucher Number').": {$this->ticket->voucher_number}";
+        }
+
+        if (!empty($details)) {
+            $message->line('')
+                ->line(__('Ticket Details').':')
+                ->lines($details);
+        }
+
+        return $message->action(__('View Ticket'), route('filament.admin.resources.tickets.view', $this->ticket));
     }
 
     public function toDatabase(object $notifiable): array
